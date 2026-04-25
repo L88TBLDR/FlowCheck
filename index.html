@@ -239,9 +239,33 @@ nav button.active{color:var(--acc)}
 .rtc-wrap{position:relative}
 .rtc-del{position:absolute;top:5px;right:5px;width:23px;height:23px;background:rgba(239,68,68,.82);border:none;border-radius:5px;color:#fff;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;font-weight:700}
 .rt-link-label{display:block;padding:4px 7px;font-size:10px;color:var(--blue);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid var(--bdr)}
-/* viewer link btn */
+/* viewer link / manual btns */
 #rm-link{padding:5px 12px;background:rgba(96,165,250,.14);border:1px solid rgba(96,165,250,.3);border-radius:6px;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;text-decoration:none;display:none;flex-shrink:0}
 #rm-link.show{display:block}
+#rm-open-manual{padding:5px 12px;background:rgba(34,197,94,.14);border:1px solid rgba(34,197,94,.3);border-radius:6px;color:var(--green);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:none;flex-shrink:0}
+#rm-open-manual.show{display:block}
+/* upload-link modal */
+#ul-modal{display:none;position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.72);align-items:flex-end;justify-content:center}
+#ul-modal.show{display:flex}
+#ul-inner{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px 14px 0 0;padding:18px 14px 28px;width:100%;max-width:600px}
+#ul-title{font-size:13px;font-weight:800;color:var(--acc);margin-bottom:3px}
+#ul-count{font-size:11px;color:var(--t3);margin-bottom:12px}
+.ul-f{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.ul-f label{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.7px;text-transform:uppercase}
+.ul-f select,.ul-f input{background:var(--bg4);border:1px solid var(--bdr);border-radius:7px;color:var(--text);padding:9px 10px;font-size:14px;font-family:inherit;outline:none;width:100%}
+.ul-f select:focus,.ul-f input:focus{border-color:var(--acc)}
+#ul-preview{font-size:11px;color:var(--blue);margin-bottom:12px;min-height:16px;font-style:italic}
+/* manuals list */
+.manual-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.m-icon{font-size:26px;flex-shrink:0}
+.m-info{flex:1;min-width:0}
+.m-name{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-meta{font-size:11px;color:var(--t3);margin-top:2px}
+.m-del{width:28px;height:28px;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.2);border-radius:6px;color:#fca5a5;font-size:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.m-open{padding:5px 10px;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.25);border-radius:6px;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
+.btn-upload-pdf{margin:9px 12px 2px;padding:11px;background:rgba(255,199,44,.06);border:1px dashed rgba(255,199,44,.35);border-radius:8px;color:var(--acc);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 24px)}
+.m-empty{padding:28px 14px;text-align:center;color:var(--t3);font-size:13px;line-height:1.9}
+.rt-link-label{display:block;padding:3px 7px;font-size:10px;color:var(--green);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-top:1px solid var(--bdr)}
 
 /* ─── EDITABLE ZONES ─── */
 #app.edit [data-edid]{outline:1.5px dashed rgba(255,199,44,.38);border-radius:5px;cursor:text;min-height:14px;transition:outline-color .15s;-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
@@ -454,7 +478,8 @@ nav button.active{color:var(--acc)}
   <div id="rm-hdr">
     <button class="rm-close" onclick="closeRef()">✕</button>
     <span id="rm-lbl"></span>
-    <a id="rm-link" href="#" target="_blank" rel="noopener">🔗 Open Source</a>
+    <a id="rm-link" href="#" target="_blank" rel="noopener">🔗 Source</a>
+    <button id="rm-open-manual" onclick="openManualPage(this.dataset.mid,this.dataset.pg)">📖</button>
     <span id="rm-pg"></span>
   </div>
   <div id="rm-body">
@@ -464,8 +489,37 @@ nav button.active{color:var(--acc)}
   </div>
 </div>
 
-<!-- Hidden file input for ref uploads -->
+<!-- Hidden file inputs -->
 <input type="file" id="ref-file-input" accept="image/*" multiple style="display:none">
+<input type="file" id="ref-pdf-input" accept="application/pdf" multiple style="display:none">
+
+<!-- Upload-link modal -->
+<div id="ul-modal">
+  <div id="ul-inner">
+    <div id="ul-title">Link Screenshots to Manual</div>
+    <div id="ul-count"></div>
+    <div class="ul-f">
+      <label>Manual (optional)</label>
+      <select id="ul-manual" onchange="ulManualChange()">
+        <option value="">No link — upload only</option>
+        <option value="_url">Custom URL...</option>
+      </select>
+    </div>
+    <div class="ul-f" id="ul-page-row" style="display:none">
+      <label>Starting Page Number</label>
+      <input id="ul-page" type="number" min="1" placeholder="e.g. 15" oninput="ulPreview()">
+    </div>
+    <div class="ul-f" id="ul-url-row" style="display:none">
+      <label>URL</label>
+      <input id="ul-url" type="url" placeholder="https://...">
+    </div>
+    <div id="ul-preview"></div>
+    <div class="nm-btns">
+      <button class="nm-save" onclick="confirmUpload()">Upload</button>
+      <button class="nm-cancel" onclick="cancelUpload()">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Notes Edit Modal ── -->
 <div id="notes-modal">
@@ -776,22 +830,26 @@ function renderECAM(){
   });
 }
 
-// ══ REFERENCE — IndexedDB ══
+// ══ REFERENCE — IndexedDB (v2: images + manuals) ══
 let refDB=null;
 function openRefDB(){
   return new Promise((res,rej)=>{
-    const r=indexedDB.open('fcRefsDB',1);
+    const r=indexedDB.open('fcRefsDB',2);
     r.onupgradeneeded=e=>{
       const db=e.target.result;
       if(!db.objectStoreNames.contains('images')){
         const s=db.createObjectStore('images',{keyPath:'id',autoIncrement:true});
         s.createIndex('section','section',{unique:false});
       }
+      if(!db.objectStoreNames.contains('manuals')){
+        db.createObjectStore('manuals',{keyPath:'id',autoIncrement:true});
+      }
     };
     r.onsuccess=e=>{refDB=e.target.result;res(refDB);};
     r.onerror=()=>rej(r.error);
   });
 }
+// ── Images ──
 function dbGetAll(section){
   return new Promise((res,rej)=>{
     const tx=refDB.transaction('images','readonly');
@@ -816,9 +874,42 @@ function dbDelete(id){
     req.onerror=()=>rej(req.error);
   });
 }
+// ── Manuals ──
+function dbGetAllManuals(){
+  return new Promise((res,rej)=>{
+    const tx=refDB.transaction('manuals','readonly');
+    const req=tx.objectStore('manuals').getAll();
+    req.onsuccess=()=>res(req.result.sort((a,b)=>a.created-b.created));
+    req.onerror=()=>rej(req.error);
+  });
+}
+function dbGetManual(id){
+  return new Promise((res,rej)=>{
+    const tx=refDB.transaction('manuals','readonly');
+    const req=tx.objectStore('manuals').get(Number(id));
+    req.onsuccess=()=>res(req.result||null);
+    req.onerror=()=>rej(req.error);
+  });
+}
+function dbAddManual(record){
+  return new Promise((res,rej)=>{
+    const tx=refDB.transaction('manuals','readwrite');
+    const req=tx.objectStore('manuals').add(record);
+    req.onsuccess=()=>res(req.result);
+    req.onerror=()=>rej(req.error);
+  });
+}
+function dbDeleteManual(id){
+  return new Promise((res,rej)=>{
+    const tx=refDB.transaction('manuals','readwrite');
+    const req=tx.objectStore('manuals').delete(Number(id));
+    req.onsuccess=()=>res();
+    req.onerror=()=>rej(req.error);
+  });
+}
 
 // ══ REFERENCE — TABS ══
-const BUILTIN_TABS=[{id:'misc',label:'Misc'},{id:'passengers',label:'Passengers'}];
+const BUILTIN_TABS=[{id:'misc',label:'Misc'},{id:'passengers',label:'Passengers'},{id:'manuals',label:'📖 Manuals'}];
 let customTabs=[];
 let activeRefTab='misc';
 function loadCustomTabs(){ try{customTabs=JSON.parse(localStorage.getItem('fc-ref-tabs')||'[]');}catch{customTabs=[];} }
@@ -842,7 +933,11 @@ function renderRefTabs(){
     const panel=document.createElement('div');
     panel.id='rp-'+tab.id;
     panel.className='rp'+(tab.id===activeRefTab?' active':'');
-    panel.innerHTML=`<div class="ref-upload-bar"><button class="btn-upload" onclick="triggerUpload('${tab.id}')">📎 &nbsp;Add Screenshot</button></div><div class="ref-grid" id="refGrid-${tab.id}"></div>`;
+    if(tab.id==='manuals'){
+      panel.innerHTML=`<div id="refGrid-manuals"></div>`;
+    } else {
+      panel.innerHTML=`<div class="ref-upload-bar"><button class="btn-upload" onclick="triggerUpload('${tab.id}')">📎 &nbsp;Add Screenshot</button></div><div class="ref-grid" id="refGrid-${tab.id}"></div>`;
+    }
     panels.appendChild(panel);
   });
   // Add-tab button
@@ -855,6 +950,7 @@ function renderRefTabs(){
 }
 
 async function renderRefPanel(section){
+  if(section==='manuals'){ await renderManualsPanel(); return; }
   const grid=document.getElementById('refGrid-'+section);
   if(!grid) return;
   grid.innerHTML='';
@@ -872,14 +968,49 @@ async function renderRefPanel(section){
   // Uploaded images
   const imgs=await dbGetAll(section);
   imgs.forEach(img=>{
+    const badge=img.manualId&&img.manualPage?`<span class="rt-link-label">📖 p.${img.manualPage}</span>`:img.link?`<span class="rt-link-label">🔗 Source link</span>`:'';
     const wrap=document.createElement('div'); wrap.className='rtc-wrap';
     const el=document.createElement('div'); el.className='rtc';
     el.onclick=()=>openRefUploaded(img.id,section);
-    el.innerHTML=`<img class="rt-img" src="${img.dataUrl}" alt="${img.name}"><div class="rt-foot" style="flex-direction:column;gap:2px"><span class="rlbl" style="font-size:11px;word-break:break-word">${img.name}</span>${img.link?`<span class="rt-link-label">🔗 Has source link</span>`:''}</div>`;
+    el.innerHTML=`<img class="rt-img" src="${img.dataUrl}" alt="${img.name}"><div class="rt-foot" style="flex-direction:column;gap:2px"><span class="rlbl" style="font-size:11px;word-break:break-word">${img.name}</span>${badge}</div>`;
     const del=document.createElement('button'); del.className='rtc-del'; del.textContent='✕';
     del.onclick=async(e)=>{ e.stopPropagation(); if(confirm(`Remove "${img.name}"?`)){ await dbDelete(img.id); renderRefPanel(section); } };
     wrap.appendChild(el); wrap.appendChild(del); grid.appendChild(wrap);
   });
+}
+
+async function renderManualsPanel(){
+  const c=document.getElementById('refGrid-manuals'); if(!c) return; c.innerHTML='';
+  const upBtn=document.createElement('button'); upBtn.className='btn-upload-pdf';
+  upBtn.innerHTML='📄 &nbsp;Upload Manual (PDF)'; upBtn.onclick=()=>document.getElementById('ref-pdf-input').click();
+  c.appendChild(upBtn);
+  const manuals=await dbGetAllManuals();
+  if(!manuals.length){
+    const e=document.createElement('div'); e.className='m-empty';
+    e.innerHTML='No manuals uploaded yet.<br>Upload a PDF, then link your screenshots<br>to specific page numbers.';
+    c.appendChild(e); return;
+  }
+  manuals.forEach(m=>{
+    const item=document.createElement('div'); item.className='manual-item';
+    const mb=(m.size/1024/1024).toFixed(1);
+    item.innerHTML=`<div class="m-icon">📖</div><div class="m-info"><div class="m-name">${m.name}</div><div class="m-meta">${mb} MB · ${new Date(m.created).toLocaleDateString()}</div></div><button class="m-open" onclick="openManualPage(${m.id},1)">Open</button><button class="m-del" onclick="deleteManual(${m.id})">✕</button>`;
+    c.appendChild(item);
+  });
+}
+
+async function deleteManual(id){
+  if(!confirm('Delete this manual? Linked screenshots will lose their page link.')) return;
+  await dbDeleteManual(id); renderRefPanel('manuals');
+}
+
+async function openManualPage(manualId,page){
+  try{
+    const m=await dbGetManual(manualId);
+    if(!m){alert('Manual not found — it may have been deleted.');return;}
+    const url=URL.createObjectURL(m.blob);
+    window.open(url+(page?'#page='+page:''),'_blank');
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){alert('Could not open: '+e.message);}
 }
 
 function switchRefTab(id){
@@ -908,20 +1039,61 @@ function delRefTab(e,id){
   renderRefTabs();
 }
 
-// ══ REFERENCE — UPLOAD ══
-let uploadTarget=null;
+// ══ REFERENCE — UPLOAD (screenshots) ══
+let uploadTarget=null; let uploadFiles=[];
 function triggerUpload(section){ uploadTarget=section; document.getElementById('ref-file-input').click(); }
+
+// ══ REFERENCE — UPLOAD (manuals / PDF) ══
+// (handled via ref-pdf-input change listener in DOMContentLoaded)
+
+// ══ UPLOAD-LINK MODAL ══
+function ulManualChange(){
+  const v=document.getElementById('ul-manual').value;
+  document.getElementById('ul-page-row').style.display=(v&&v!=='_url')?'block':'none';
+  document.getElementById('ul-url-row').style.display=(v==='_url')?'block':'none';
+  ulPreview();
+}
+function ulPreview(){
+  const v=document.getElementById('ul-manual').value;
+  const pg=parseInt(document.getElementById('ul-page').value)||null;
+  const n=uploadFiles.length;
+  const el=document.getElementById('ul-preview');
+  if(v&&v!=='_url'&&pg){
+    const pages=Array.from({length:n},(_,i)=>pg+i).join(', ');
+    el.textContent=`Will link to page${n>1?'s':''}: ${pages}`;
+  } else { el.textContent=''; }
+}
+async function confirmUpload(){
+  const v=document.getElementById('ul-manual').value;
+  const pgStart=parseInt(document.getElementById('ul-page').value)||null;
+  const customUrl=document.getElementById('ul-url').value.trim()||null;
+  for(let i=0;i<uploadFiles.length;i++){
+    const file=uploadFiles[i];
+    const dataUrl=await new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(file);});
+    await dbAdd({section:uploadTarget,name:file.name,dataUrl,
+      link:v==='_url'?customUrl:null,
+      manualId:(v&&v!=='_url')?parseInt(v):null,
+      manualPage:(v&&v!=='_url'&&pgStart)?pgStart+i:null,
+      created:Date.now()});
+  }
+  uploadFiles=[]; document.getElementById('ul-modal').classList.remove('show');
+  renderRefPanel(uploadTarget);
+}
+function cancelUpload(){ uploadFiles=[]; document.getElementById('ul-modal').classList.remove('show'); }
 
 // ══ REFERENCE — VIEWER ══
 let refPool=[]; let refIdx=0;
 
 function openRefStatic(n){
-  refPool=REF_PAGES.map(p=>({src:`ref/page_${String(p.n).padStart(2,'0')}.jpg`,label:p.l,link:null}));
+  refPool=REF_PAGES.map(p=>({src:`ref/page_${String(p.n).padStart(2,'0')}.jpg`,label:p.l,link:null,manualId:null,manualPage:null}));
   refIdx=n-1; showRefViewer();
 }
 async function openRefUploaded(id,section){
   const imgs=await dbGetAll(section);
-  refPool=imgs.map(img=>({src:img.dataUrl,label:img.name,link:img.link||null}));
+  // pre-fetch manual names
+  const mnames={};
+  for(const img of imgs){ if(img.manualId&&!mnames[img.manualId]){try{const m=await dbGetManual(img.manualId);if(m)mnames[img.manualId]=m.name;}catch{}} }
+  refPool=imgs.map(img=>({src:img.dataUrl,label:img.name,link:img.link||null,manualId:img.manualId||null,manualPage:img.manualPage||null,manualName:img.manualId?(mnames[img.manualId]||'Manual'):null}));
   refIdx=Math.max(0,imgs.findIndex(img=>img.id===id));
   showRefViewer();
 }
@@ -932,7 +1104,13 @@ function updRefModal(){
   document.getElementById('rm-lbl').textContent=item.label||'';
   document.getElementById('rm-pg').textContent=`${refIdx+1} / ${refPool.length}`;
   const lnk=document.getElementById('rm-link');
-  if(item.link){ lnk.href=item.link; lnk.classList.add('show'); } else { lnk.href='#'; lnk.classList.remove('show'); }
+  if(item.link){lnk.href=item.link;lnk.classList.add('show');}else{lnk.href='#';lnk.classList.remove('show');}
+  const manBtn=document.getElementById('rm-open-manual');
+  if(item.manualId&&item.manualPage){
+    manBtn.textContent=`📖 p.${item.manualPage}`;
+    manBtn.dataset.mid=item.manualId; manBtn.dataset.pg=item.manualPage;
+    manBtn.classList.add('show');
+  } else { manBtn.classList.remove('show'); }
 }
 function nextRef(){ if(refIdx<refPool.length-1){refIdx++;updRefModal();} }
 function prevRef(){ if(refIdx>0){refIdx--;updRefModal();} }
@@ -1009,16 +1187,32 @@ document.addEventListener('DOMContentLoaded',async()=>{
   img.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;},{passive:true});
   img.addEventListener('touchend',e=>{ const dx=touchX-e.changedTouches[0].clientX; if(Math.abs(dx)>50){dx>0?nextRef():prevRef();} });
 
-  // File input handler
+  // Screenshot upload: open link modal
   document.getElementById('ref-file-input').addEventListener('change',async function(){
-    const files=Array.from(this.files); if(!files.length) return;
+    uploadFiles=Array.from(this.files); this.value='';
+    if(!uploadFiles.length) return;
+    // Populate manual dropdown
+    const sel=document.getElementById('ul-manual');
+    while(sel.options.length>2) sel.remove(2);
+    const manuals=await dbGetAllManuals();
+    manuals.forEach(m=>{ const o=document.createElement('option'); o.value=m.id; o.textContent=m.name; sel.appendChild(o); });
+    sel.value='';
+    document.getElementById('ul-count').textContent=uploadFiles.length+' screenshot'+(uploadFiles.length>1?'s':'')+' selected';
+    document.getElementById('ul-page-row').style.display='none';
+    document.getElementById('ul-url-row').style.display='none';
+    document.getElementById('ul-page').value='';
+    document.getElementById('ul-url').value='';
+    document.getElementById('ul-preview').textContent='';
+    document.getElementById('ul-modal').classList.add('show');
+  });
+
+  // PDF manual upload
+  document.getElementById('ref-pdf-input').addEventListener('change',async function(){
+    const files=Array.from(this.files); this.value=''; if(!files.length) return;
     for(const file of files){
-      const link=prompt(`Optional link for "${file.name}"\n(URL to manual/source — leave blank to skip):`)?.trim()||null;
-      const dataUrl=await new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(file); });
-      await dbAdd({section:uploadTarget,name:file.name,dataUrl,link,created:Date.now()});
+      await dbAddManual({name:file.name,blob:file,size:file.size,created:Date.now()});
     }
-    this.value='';
-    renderRefPanel(uploadTarget);
+    renderRefPanel('manuals');
   });
 
   // Restore all edited content (must come after renderECAM etc)
