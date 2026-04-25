@@ -1,6 +1,6 @@
-const CACHE = 'flowcheck-v2';
+const CACHE = 'flowcheck-v3';
 const ASSETS = [
-  './index.html','./manifest.json','./icon.svg',
+  './index.html','./manifest.json','./icon.svg','./icon-192.png','./icon-512.png',
   './ref/page_01.jpg','./ref/page_02.jpg','./ref/page_03.jpg','./ref/page_04.jpg',
   './ref/page_05.jpg','./ref/page_06.jpg','./ref/page_07.jpg','./ref/page_08.jpg',
   './ref/page_09.jpg','./ref/page_10.jpg','./ref/page_11.jpg','./ref/page_12.jpg',
