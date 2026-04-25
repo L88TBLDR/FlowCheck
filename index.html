@@ -243,6 +243,12 @@ nav button.active{color:var(--acc)}
 #rm-link{padding:5px 12px;background:rgba(96,165,250,.14);border:1px solid rgba(96,165,250,.3);border-radius:6px;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;text-decoration:none;display:none;flex-shrink:0}
 #rm-link.show{display:block}
 
+/* ─── EDITABLE ZONES ─── */
+#app.edit [data-edid]{outline:1.5px dashed rgba(255,199,44,.38);border-radius:5px;cursor:text;min-height:14px;transition:outline-color .15s}
+#app.edit [data-edid]:focus,[data-edid]:focus-within{outline-color:var(--acc)!important;outline-style:solid}
+.ed-hint{display:none;padding:6px 14px;font-size:10px;color:var(--acc);font-weight:700;letter-spacing:.5px;opacity:.75}
+#app.edit .ed-hint{display:block}
+
 /* animations */
 @keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 .popping{animation:pop .2s ease}
@@ -278,15 +284,19 @@ nav button.active{color:var(--acc)}
   <div class="reset-wrap">
     <button class="btn-reset" onclick="doReset()">↺ &nbsp;Reset Checklist for New Flight</button>
   </div>
+  <div class="export-wrap" style="display:block;padding:0 14px 8px">
+    <button class="btn-reset" style="font-size:12px;padding:10px;opacity:.6" onclick="resetAllEditable()">⚠ Reset ALL Edited Content to Defaults</button>
+  </div>
 </div>
 
 <!-- ════ PA SCRIPTS ════ -->
 <div id="page-pa" class="page">
-<div class="pgt">PA Scripts &amp; Announcements</div>
+<div class="pgt" data-edid="pgt-pa">PA Scripts &amp; Announcements</div>
+<div class="ed-hint">✏ Tap any yellow-outlined area to edit</div>
 
 <!-- Welcome -->
 <div class="card" id="c-w">
-  <div class="card-hdr" onclick="toggleCard('c-w',renderWelcome)"><div><div class="ct">CAPTAIN'S WELCOME ANNOUNCEMENT</div><div class="cs">Pre-departure · fill fields then read aloud</div></div><div class="chev">▼</div></div>
+  <div class="card-hdr" onclick="toggleCard('c-w',renderWelcome)"><div><div class="ct" data-edid="ct-pa-w">CAPTAIN'S WELCOME ANNOUNCEMENT</div><div class="cs" data-edid="cs-pa-w">Pre-departure · fill fields then read aloud</div></div><div class="chev">▼</div></div>
   <div class="card-body">
     <div class="fg">
       <div class="f"><label>Greeting</label><select id="w-g" onchange="renderWelcome()"><option value="morning">Good Morning</option><option value="afternoon">Good Afternoon</option><option value="evening">Good Evening</option></select></div>
@@ -306,7 +316,7 @@ nav button.active{color:var(--acc)}
 
 <!-- Arrival -->
 <div class="card" id="c-a">
-  <div class="card-hdr" onclick="toggleCard('c-a',renderArrival)"><div><div class="ct">ARRIVAL ANNOUNCEMENT</div><div class="cs">Top of descent · ~25 min to landing</div></div><div class="chev">▼</div></div>
+  <div class="card-hdr" onclick="toggleCard('c-a',renderArrival)"><div><div class="ct" data-edid="ct-pa-a">ARRIVAL ANNOUNCEMENT</div><div class="cs" data-edid="cs-pa-a">Top of descent · ~25 min to landing</div></div><div class="chev">▼</div></div>
   <div class="card-body">
     <div class="fg">
       <div class="f"><label>PF</label><select id="a-pf" onchange="renderArrival()"><option value="captain">Captain (me)</option><option value="fo">First Officer</option></select></div>
@@ -327,7 +337,7 @@ nav button.active{color:var(--acc)}
 
 <!-- Go Around -->
 <div class="card" id="c-ga">
-  <div class="card-hdr" onclick="toggleCard('c-ga',renderGA)"><div><div class="ct">GO AROUND</div><div class="cs">After missed approach</div></div><div class="chev">▼</div></div>
+  <div class="card-hdr" onclick="toggleCard('c-ga',renderGA)"><div><div class="ct" data-edid="ct-pa-ga">GO AROUND</div><div class="cs" data-edid="cs-pa-ga">After missed approach</div></div><div class="chev">▼</div></div>
   <div class="card-body">
     <div class="fg">
       <div class="f"><label>Reason</label><select id="ga-r" onchange="renderGA()"><option value="weather conditions">Weather conditions</option><option value="air traffic conditions">Air traffic conditions</option><option value="weather / air traffic conditions">Weather / ATC conditions</option></select></div>
@@ -340,7 +350,7 @@ nav button.active{color:var(--acc)}
 
 <!-- Turbulence -->
 <div class="card" id="c-t">
-  <div class="card-hdr" onclick="toggleCard('c-t',()=>setTurb(1))"><div><div class="ct">TURBULENCE ANNOUNCEMENTS</div><div class="cs">PA 1–4 · Reassurance · tap to select</div></div><div class="chev">▼</div></div>
+  <div class="card-hdr" onclick="toggleCard('c-t',()=>setTurb(1))"><div><div class="ct" data-edid="ct-pa-t">TURBULENCE ANNOUNCEMENTS</div><div class="cs" data-edid="cs-pa-t">PA 1–4 · Reassurance · tap to select</div></div><div class="chev">▼</div></div>
   <div class="card-body">
     <div class="ttabs">
       <div class="ttab on" id="tt1" onclick="setTurb(1)">PA 1<br><span style="font-size:9px;font-weight:500">Light</span></div>
@@ -359,34 +369,36 @@ nav button.active{color:var(--acc)}
 
 <!-- ════ BRIEFINGS ════ -->
 <div id="page-briefings" class="page">
-<div class="pgt">Standard Briefings &amp; References</div>
+<div class="pgt" data-edid="pgt-brief">Standard Briefings &amp; References</div>
+<div class="ed-hint">✏ Tap any yellow-outlined area to edit</div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">STANDARD TAKEOFF BRIEFING</div></div><div class="chev">▼</div></div>
-<div class="card-body" style="padding:0"><div class="brief">"Call out any malfunction or warning. When any malfunction occurs before V1, I will call <span class="em">'STOP'</span> or <span class="em">'GO'</span>. Before V1, I will reject the takeoff for engine failure, any warning, caution or condition that <span class="em">significantly affects the safety of the flight</span>."</div></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-tkoff">STANDARD TAKEOFF BRIEFING</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><div class="brief" data-edid="b-tkoff">"Call out any malfunction or warning. When any malfunction occurs before V1, I will call <span class="em">'STOP'</span> or <span class="em">'GO'</span>. Before V1, I will reject the takeoff for engine failure, any warning, caution or condition that <span class="em">significantly affects the safety of the flight</span>."</div></div></div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">FIRST OFFICER SECTOR BRIEFING (by Captain)</div></div><div class="chev">▼</div></div>
-<div class="card-body" style="padding:0"><div class="brief">"I shall have control of the thrust levers for the takeoff. If I call <span class="em">'STOP'</span>, I will take over control and reject the takeoff. If I call <span class="em">'GO'</span>, you will continue the takeoff until I say, <span class="em">'I HAVE CONTROL'</span>"</div></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-fo">FIRST OFFICER SECTOR BRIEFING (by Captain)</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><div class="brief" data-edid="b-fo">"I shall have control of the thrust levers for the takeoff. If I call <span class="em">'STOP'</span>, I will take over control and reject the takeoff. If I call <span class="em">'GO'</span>, you will continue the takeoff until I say, <span class="em">'I HAVE CONTROL'</span>"</div></div></div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">CABIN CREW BRIEFING — AWNF CPTS</div><div class="cs">Pre-departure briefing to CIC</div></div><div class="chev">▼</div></div>
-<div class="card-body" style="padding:0"><div class="brief"><strong style="color:var(--acc)">AWNF</strong> &nbsp;Aircraft status · Weather · NOTAMs · Fuel<br><br><strong style="color:var(--acc)">CPTS</strong> &nbsp;Cargo (NOTOC) · PWD Pax · Time (ETD + flight time) · Station Colour<div class="ibox"><div class="it">✈ A320 iPad Login</div><div class="ir"><span style="color:var(--t2)">Aircraft</span><span>9V-TAN</span></div><div class="ir"><span style="color:var(--t2)">Username</span><span>TAN</span></div><div class="ir"><span style="color:var(--t2)">Password</span><span>A320#tan</span></div></div></div></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-awnf">CABIN CREW BRIEFING — AWNF CPTS</div><div class="cs" data-edid="cs-b-awnf">Pre-departure briefing to CIC</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><div class="brief" data-edid="b-awnf"><strong style="color:var(--acc)">AWNF</strong> &nbsp;Aircraft status · Weather · NOTAMs · Fuel<br><br><strong style="color:var(--acc)">CPTS</strong> &nbsp;Cargo (NOTOC) · PWD Pax · Time (ETD + flight time) · Station Colour<div class="ibox"><div class="it">✈ A320 iPad Login</div><div class="ir"><span style="color:var(--t2)">Aircraft</span><span>9V-TAN</span></div><div class="ir"><span style="color:var(--t2)">Username</span><span>TAN</span></div><div class="ir"><span style="color:var(--t2)">Password</span><span>A320#tan</span></div></div></div></div></div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">E-LOADSHEET WORKFLOW</div><div class="cs">Timeline before ETD</div></div><div class="chev">▼</div></div>
-<div class="card-body" style="padding:0"><table class="wft"><tr><th>ETD−</th><th>By</th><th>Action</th></tr><tr><td class="etd">−40</td><td class="by">Load Control</td><td>Final ZFW available via Aviator</td></tr><tr><td class="etd">−35</td><td class="by">Flight Crew</td><td>Final Fuel &amp; Burn figures relayed to Load Control via ACARS</td></tr><tr><td class="etd">−12</td><td class="by">Flight Crew</td><td>E-Loadsheet received via Aviator</td></tr><tr><td class="etd" style="color:var(--acc)">↑</td><td class="by">Flight Crew</td><td>Check &amp; sign Loadsheet on Aviator</td></tr><tr><td class="etd">−5</td><td class="by">Load Control</td><td>ACARS: "Signed Loadsheet and NOTOC VER XX received"</td></tr></table></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-ls">E-LOADSHEET WORKFLOW</div><div class="cs" data-edid="cs-b-ls">Timeline before ETD</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><table class="wft" data-edid="b-ls"><tr><th>ETD−</th><th>By</th><th>Action</th></tr><tr><td class="etd">−40</td><td class="by">Load Control</td><td>Final ZFW available via Aviator</td></tr><tr><td class="etd">−35</td><td class="by">Flight Crew</td><td>Final Fuel &amp; Burn figures relayed to Load Control via ACARS</td></tr><tr><td class="etd">−12</td><td class="by">Flight Crew</td><td>E-Loadsheet received via Aviator</td></tr><tr><td class="etd" style="color:var(--acc)">↑</td><td class="by">Flight Crew</td><td>Check &amp; sign Loadsheet on Aviator</td></tr><tr><td class="etd">−5</td><td class="by">Load Control</td><td>ACARS: "Signed Loadsheet and NOTOC VER XX received"</td></tr></table></div></div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">E-NOTOC WORKFLOW</div><div class="cs">Timeline before ETD</div></div><div class="chev">▼</div></div>
-<div class="card-body" style="padding:0"><table class="wft"><tr><th>ETD−</th><th>By</th><th>Action</th></tr><tr><td class="etd">−20 to −15</td><td class="by">Flight Crew</td><td>E-NOTOC received via Aviator</td></tr><tr><td class="etd" style="color:var(--acc)">↑</td><td class="by">Flight Crew</td><td>Verify &amp; sign E-NOTOC on Aviator</td></tr><tr><td class="etd">−2</td><td class="by">Load Control</td><td>ACARS confirmation of signed Loadsheet + NOTOC</td></tr></table></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-notoc">E-NOTOC WORKFLOW</div><div class="cs" data-edid="cs-b-notoc">Timeline before ETD</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><table class="wft" data-edid="b-notoc"><tr><th>ETD−</th><th>By</th><th>Action</th></tr><tr><td class="etd">−20 to −15</td><td class="by">Flight Crew</td><td>E-NOTOC received via Aviator</td></tr><tr><td class="etd" style="color:var(--acc)">↑</td><td class="by">Flight Crew</td><td>Verify &amp; sign E-NOTOC on Aviator</td></tr><tr><td class="etd">−2</td><td class="by">Load Control</td><td>ACARS confirmation of signed Loadsheet + NOTOC</td></tr></table></div></div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">FUEL UPLIFT REASONS (14)</div><div class="cs">Discretionary / extra fuel justifications</div></div><div class="chev">▼</div></div>
-<div class="card-body"><ol class="reasons"><li>Weather – Departure</li><li>Weather – Enroute</li><li>Weather – Destination</li><li>ZFW Change</li><li>Long Taxi</li><li>Tankering</li><li>Technical</li><li>ATC – Departure</li><li>ATC – Enroute</li><li>ATC – Destination</li><li>Redispatch Top-up</li><li>Previous Sector</li><li>Over Fuel</li><li>Other – Enter reason in free text</li></ol></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-fuel">FUEL UPLIFT REASONS (14)</div><div class="cs" data-edid="cs-b-fuel">Discretionary / extra fuel justifications</div></div><div class="chev">▼</div></div>
+<div class="card-body"><ol class="reasons" data-edid="b-fuel"><li>Weather – Departure</li><li>Weather – Enroute</li><li>Weather – Destination</li><li>ZFW Change</li><li>Long Taxi</li><li>Tankering</li><li>Technical</li><li>ATC – Departure</li><li>ATC – Enroute</li><li>ATC – Destination</li><li>Redispatch Top-up</li><li>Previous Sector</li><li>Over Fuel</li><li>Other – Enter reason in free text</li></ol></div></div>
 
-<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">AIRCRAFT DEFECT — DECISION FLOW</div><div class="cs">Before &amp; after pushback</div></div><div class="chev">▼</div></div>
-<div class="card-body"><div style="font-size:13px;line-height:2;color:var(--t2)"><div style="color:var(--text);font-weight:700;margin-bottom:6px">Before Pushback:</div><div>1. Deferred in DDL? <span style="color:var(--acc)">→ Yes:</span> MEL repetitive task? No → No further action | Yes → Engineer 'M' procedure, ATL entry</div><div>2. FCOM/eQRH reset available? <span style="color:var(--acc)">→ Try reset.</span> Successful → 'FOR INFO' ATL, no further action</div><div>3. In SIN? <span style="color:var(--acc)">→ Yes:</span> MAINTROL – engineer to rectify/defer. ATL &amp; DDL entries required</div><div>4. Not in SIN → Contact local engineers. If unavailable → MAINTROL</div><div style="color:var(--t3);margin-top:8px;font-size:11px">Commanders may defer MEL items with 'O' or NO procedures in consultation with MAINTROL.</div><div style="color:var(--text);font-weight:700;margin-top:12px;margin-bottom:6px">After Pushback to T/O Roll:</div><div>1. FCOM/eQRH reset? → Try. Successful → ATL 'FOR INFO', continue</div><div>2. Refer to MEL → 'NO DISPATCH'? → Return to bay, contact engineers, ATL entry</div><div>3. 'M' procedure? → Return to bay | 'O' procedure? → Carry out, consult MAINTROL, continue</div></div></div></div>
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct" data-edid="ct-b-defect">AIRCRAFT DEFECT — DECISION FLOW</div><div class="cs" data-edid="cs-b-defect">Before &amp; after pushback</div></div><div class="chev">▼</div></div>
+<div class="card-body"><div data-edid="b-defect" style="font-size:13px;line-height:2;color:var(--t2)"><div style="color:var(--text);font-weight:700;margin-bottom:6px">Before Pushback:</div><div>1. Deferred in DDL? <span style="color:var(--acc)">→ Yes:</span> MEL repetitive task? No → No further action | Yes → Engineer 'M' procedure, ATL entry</div><div>2. FCOM/eQRH reset available? <span style="color:var(--acc)">→ Try reset.</span> Successful → 'FOR INFO' ATL, no further action</div><div>3. In SIN? <span style="color:var(--acc)">→ Yes:</span> MAINTROL – engineer to rectify/defer. ATL &amp; DDL entries required</div><div>4. Not in SIN → Contact local engineers. If unavailable → MAINTROL</div><div style="color:var(--t3);margin-top:8px;font-size:11px">Commanders may defer MEL items with 'O' or NO procedures in consultation with MAINTROL.</div><div style="color:var(--text);font-weight:700;margin-top:12px;margin-bottom:6px">After Pushback to T/O Roll:</div><div>1. FCOM/eQRH reset? → Try. Successful → ATL 'FOR INFO', continue</div><div>2. Refer to MEL → 'NO DISPATCH'? → Return to bay, contact engineers, ATL entry</div><div>3. 'M' procedure? → Return to bay | 'O' procedure? → Carry out, consult MAINTROL, continue</div></div></div></div>
 </div><!-- /page-briefings -->
 
 <!-- ════ QUICK REF ════ -->
 <div id="page-qr" class="page">
-<div class="pgt">Quick Reference</div>
-<div class="qg">
+<div class="pgt" data-edid="pgt-qr">Quick Reference</div>
+<div class="ed-hint">✏ Tap any yellow-outlined area to edit — values, labels, anything</div>
+<div class="qg" data-edid="qr">
   <div class="qc"><div class="qt">Pax Weights</div><div class="qr"><span class="ql">Adult</span><span class="qv">77 kg</span></div><div class="qr"><span class="ql">Child</span><span class="qv">40 kg</span></div><div class="qr"><span class="ql">Infant</span><span class="qv">10 kg</span></div></div>
   <div class="qc"><div class="qt">APU Fuel Burn</div><div class="qr"><span class="ql">No Bleed</span><span class="qv">80 kg/hr</span></div><div class="qr"><span class="ql">With Bleed</span><span class="qv">130 kg/hr</span></div></div>
   <div class="qc full"><div class="qt">Fuel Burn Rates</div><div class="qr"><span class="ql">Taxi</span><span class="qv">20 kg/min</span></div><div class="qr"><span class="ql">Climb</span><span class="qv">60 kg/min</span></div><div class="qr"><span class="ql">Cruise</span><span class="qv">40–50 kg/min</span></div><div class="qr"><span class="ql">Descent</span><span class="qv">40 kg/min</span></div><div class="qr"><span class="ql">10 nm</span><span class="qv">≈ 100 kg</span></div><div class="qr"><span class="ql">1 Hold (4 min)</span><span class="qv">≈ 200 kg</span></div></div>
@@ -405,14 +417,15 @@ nav button.active{color:var(--acc)}
 <!-- ════ ECAM ════ -->
 <div id="page-ecam" class="page">
 <div class="ecam-wrap">
-  <div class="pgt" style="padding:7px 0 11px">ECAM Reset Table — A320 / A320N / A321N</div>
+  <div class="pgt" data-edid="pgt-ecam" style="padding:7px 0 11px">ECAM Reset Table — A320 / A320N / A321N</div>
+  <div class="ed-hint">✏ Tap fault text to edit directly</div>
   <div class="legend">
     <div class="li"><div class="ld" style="background:#fca5a5"></div><span style="color:#fca5a5">Warning/Caution</span></div>
     <div class="li"><div class="ld" style="background:var(--t2)"></div><span>No W/C Box</span></div>
     <div class="li"><div class="ld" style="background:#fbbf24"></div><span style="color:#fbbf24">Ground Reset Only</span></div>
     <div class="li"><div class="ld" style="background:var(--blue)"></div><span style="color:var(--blue)">In-flight Reset Only</span></div>
   </div>
-  <div id="ecamContent"></div>
+  <div id="ecamContent" data-edid="ecam"></div>
 </div>
 </div>
 
@@ -674,6 +687,28 @@ function toggleEdit(){
   btn.classList.toggle('on',editMode);
   btn.textContent=editMode?'✕':'✏';
   document.getElementById('edit-banner').classList.toggle('show',editMode);
+  if(editMode){
+    document.querySelectorAll('[data-edid]').forEach(el=>{el.contentEditable='true';});
+  } else {
+    document.querySelectorAll('[data-edid]').forEach(el=>{el.contentEditable='false';});
+    saveEditable();
+  }
+}
+function saveEditable(){
+  document.querySelectorAll('[data-edid]').forEach(el=>{
+    localStorage.setItem('fc-ed-'+el.dataset.edid, el.innerHTML);
+  });
+}
+function loadEditable(){
+  document.querySelectorAll('[data-edid]').forEach(el=>{
+    const saved=localStorage.getItem('fc-ed-'+el.dataset.edid);
+    if(saved!==null) el.innerHTML=saved;
+  });
+}
+function resetAllEditable(){
+  if(!confirm('Reset ALL edited content to factory defaults? This cannot be undone.')) return;
+  document.querySelectorAll('[data-edid]').forEach(el=>localStorage.removeItem('fc-ed-'+el.dataset.edid));
+  location.reload();
 }
 function edLbl(si,ii){
   const cur=AD[si].items[ii].label;
@@ -985,6 +1020,9 @@ document.addEventListener('DOMContentLoaded',async()=>{
     this.value='';
     renderRefPanel(uploadTarget);
   });
+
+  // Restore all edited content (must come after renderECAM etc)
+  loadEditable();
 
   // Init ref tabs
   loadCustomTabs();
