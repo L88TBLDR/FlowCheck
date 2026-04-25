@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b0b16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FlowCheck">
+<title>FlowCheck</title>
+<link rel="manifest" href="manifest.json">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0b16;--bg2:#12121e;--bg3:#191928;--bg4:#090912;
+  --acc:#FFC72C;--acc2:#e6b000;
+  --green:#22c55e;--red:#ef4444;--blue:#60a5fa;
+  --text:#f1f5f9;--t2:#94a3b8;--t3:#64748b;
+  --bdr:rgba(255,255,255,.07);--r:12px;
+  --nav:60px;--hdr:52px
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* header */
+header{height:var(--hdr);min-height:var(--hdr);background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 14px;padding-top:env(safe-area-inset-top,0);flex-shrink:0;z-index:20}
+.hl{display:flex;align-items:center;gap:8px}
+.logo{font-size:20px}
+header h1{font-size:15px;font-weight:900;letter-spacing:.5px;color:var(--text)}
+header h1 em{color:var(--acc);font-style:normal}
+.hr{display:flex;align-items:center;gap:8px}
+.pill{background:var(--bg3);border:1px solid var(--bdr);border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--acc)}
+.btn-edit{width:32px;height:32px;border-radius:7px;background:var(--bg3);border:1px solid var(--bdr);color:var(--t2);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.btn-edit.on{background:rgba(255,199,44,.12);border-color:var(--acc);color:var(--acc)}
+
+/* progress */
+.pbw{height:3px;background:var(--bg4);flex-shrink:0}
+.pb{height:100%;background:var(--green);transition:width .4s ease;width:0}
+
+/* edit banner */
+#edit-banner{display:none;align-items:center;gap:8px;padding:7px 14px;background:rgba(255,199,44,.1);border-bottom:1px solid rgba(255,199,44,.25);font-size:11px;font-weight:700;color:var(--acc);letter-spacing:.4px;flex-shrink:0}
+#edit-banner.show{display:flex}
+#edit-banner span{margin-left:auto;color:var(--t3);font-weight:500;font-size:10px}
+
+/* pages */
+main{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;padding-bottom:12px}
+.page.active{display:block}
+
+/* nav */
+nav{height:var(--nav);min-height:var(--nav);background:var(--bg2);border-top:1px solid var(--bdr);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0)}
+nav button{flex:1;background:none;border:none;color:var(--t3);font-size:8.5px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:color .15s;text-transform:uppercase;letter-spacing:.2px;padding:0 2px}
+nav button .ni{font-size:19px;line-height:1}
+nav button.active{color:var(--acc)}
+
+/* section header */
+.sh{position:sticky;top:0;z-index:10;background:linear-gradient(var(--bg) 80%,transparent);padding:9px 14px 7px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:6px}
+.sh-title{font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--acc);text-transform:uppercase;flex:1}
+.sh-count{font-size:11px;color:var(--t3);font-weight:600}
+.sh-edit{width:22px;height:22px;background:none;border:none;color:var(--acc);font-size:13px;cursor:pointer;display:none;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0}
+#app.edit .sh-edit{display:flex}
+
+/* checklist items */
+.ci{background:var(--bg2);border-bottom:1px solid var(--bdr)}
+.ci:last-child{border-bottom:none}
+.ci-row{display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.cb{width:27px;height:27px;min-width:27px;border-radius:7px;border:2px solid var(--t3);display:flex;align-items:center;justify-content:center;font-size:14px;color:transparent;transition:all .15s;flex-shrink:0}
+.ci.done .cb{background:var(--green);border-color:var(--green);color:#fff}
+.ci-lbl{flex:1;font-size:14px;font-weight:500;line-height:1.4}
+.ci.done .ci-lbl{color:var(--t3);text-decoration:line-through;text-decoration-color:var(--t3)}
+.exp-btn{width:27px;height:27px;min-width:27px;border-radius:6px;background:var(--bg3);border:1px solid var(--bdr);color:var(--t2);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .2s}
+.ci.open .exp-btn{transform:rotate(180deg)}
+.ci-notes{display:none;background:var(--bg3);border-top:1px solid var(--bdr);padding:9px 14px 11px 52px}
+.ci.open .ci-notes{display:block}
+.ci-notes ul{list-style:none}
+.ci-notes li{font-size:13px;color:var(--t2);padding:3px 0 3px 14px;position:relative;line-height:1.55}
+.ci-notes li::before{content:'▸';position:absolute;left:0;color:var(--acc);font-size:10px;top:4px}
+
+/* edit bar */
+.ci-ebar{display:none;padding:3px 14px 9px;gap:5px;background:var(--bg3);border-top:1px solid var(--bdr)}
+#app.edit .ci-ebar{display:flex}
+.eb{flex:1;padding:7px 2px;background:var(--bg4);border:1px solid var(--bdr);border-radius:6px;color:var(--t2);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:2px;transition:all .15s;min-width:0}
+.eb:active{background:var(--bg3)}
+.eb.del{color:#fca5a5;border-color:rgba(239,68,68,.25)}
+.add-item{display:none;margin:0 14px 8px;padding:10px;background:rgba(255,199,44,.06);border:1px dashed rgba(255,199,44,.35);border-radius:8px;color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;text-align:center}
+#app.edit .add-item{display:block}
+
+/* reset + export */
+.reset-wrap{padding:16px 14px 8px}
+.btn-reset{width:100%;padding:13px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:var(--r);color:#fca5a5;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.export-wrap{display:none;padding:8px 14px 0}
+#app.edit .export-wrap{display:block}
+.btn-export{width:100%;padding:13px;background:rgba(255,199,44,.1);border:1px solid rgba(255,199,44,.35);border-radius:var(--r);color:var(--acc);font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+
+/* page title */
+.pgt{padding:13px 14px 5px;font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--t3);text-transform:uppercase}
+
+/* cards */
+.card{margin:7px 14px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden}
+.card-hdr{padding:12px 14px;background:var(--bg3);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.ct{font-size:13px;font-weight:800;color:var(--acc)}
+.cs{font-size:10px;color:var(--t3);margin-top:2px}
+.chev{color:var(--t3);font-size:11px;transition:transform .2s;flex-shrink:0}
+.card.open .chev{transform:rotate(180deg)}
+.card-body{display:none;padding:14px}
+.card.open .card-body{display:block}
+
+/* PA fields */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.fg.one{grid-template-columns:1fr}
+.f{display:flex;flex-direction:column;gap:3px}
+.f.s2{grid-column:1/-1}
+.f label{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.7px;text-transform:uppercase}
+.f input,.f select,.f textarea{background:var(--bg4);border:1px solid var(--bdr);border-radius:7px;color:var(--text);padding:8px 10px;font-size:14px;font-family:inherit;outline:none;width:100%;transition:border-color .15s}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--acc)}
+.f select option{background:var(--bg2)}
+.f textarea{resize:none;min-height:52px}
+.ftog{display:flex;align-items:center;gap:8px;padding:6px 0}
+.ftog label{font-size:13px;color:var(--t2);cursor:pointer}
+.tsw{width:42px;height:23px;background:var(--bg4);border:1px solid var(--bdr);border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tsw::after{content:'';position:absolute;width:17px;height:17px;background:var(--t3);border-radius:50%;top:2px;left:2px;transition:all .2s}
+.tsw.on{background:rgba(255,199,44,.18);border-color:var(--acc)}
+.tsw.on::after{background:var(--acc);transform:translateX(19px)}
+
+/* PA script */
+.pas{background:var(--bg4);border:1px solid var(--bdr);border-radius:8px;padding:13px;font-size:14px;line-height:1.85;color:var(--text);margin-bottom:11px}
+.pas .fill{color:var(--acc);font-weight:700}
+.pas .blank{color:#f87171;font-style:italic}
+.pas .req{font-weight:800;text-transform:uppercase;text-decoration:underline;text-decoration-color:rgba(239,68,68,.4)}
+.pas .nl{font-size:11px;color:var(--t3);font-style:italic;display:block;margin-top:6px;border-top:1px solid var(--bdr);padding-top:5px}
+.btn-copy{width:100%;padding:12px;background:var(--acc);border:none;border-radius:8px;color:#000;font-size:13px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.ttabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px}
+.ttab{flex:1;min-width:50px;padding:8px 4px;background:var(--bg4);border:1px solid var(--bdr);border-radius:7px;color:var(--t3);font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;line-height:1.4}
+.ttab.on{border-color:var(--acc);color:var(--acc);background:rgba(255,199,44,.07)}
+.tex{display:none;margin-bottom:12px}
+.tex.show{display:block}
+
+/* briefings */
+.brief{padding:13px 14px;font-size:14px;line-height:1.85;color:var(--text)}
+.em{color:var(--acc);font-weight:800}
+.wft{width:100%;border-collapse:collapse;font-size:13px}
+.wft th{background:var(--bg3);color:var(--acc);padding:8px 11px;text-align:left;font-size:10px;letter-spacing:.7px;text-transform:uppercase}
+.wft td{padding:8px 11px;border-top:1px solid var(--bdr);color:var(--text);vertical-align:top}
+.wft .etd{font-weight:800;color:var(--red);white-space:nowrap}
+.wft .by{color:var(--t3);font-size:12px}
+.ibox{background:var(--bg3);border-radius:8px;padding:11px;font-size:13px;margin-top:8px;border:1px solid rgba(255,199,44,.12)}
+.ibox .it{color:var(--acc);font-weight:800;margin-bottom:5px;font-size:12px}
+.ibox .ir{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bdr)}
+.ibox .ir:last-child{border-bottom:none}
+.ibox .ir span:last-child{font-weight:700;color:var(--text)}
+.reasons{list-style:none;counter-reset:r}
+.reasons li{counter-increment:r;padding:7px 0 7px 30px;position:relative;border-bottom:1px solid var(--bdr);font-size:14px;line-height:1.4}
+.reasons li:last-child{border-bottom:none}
+.reasons li::before{content:counter(r);position:absolute;left:0;top:6px;width:21px;height:21px;background:var(--bg3);border:1px solid var(--bdr);border-radius:5px;font-size:10px;font-weight:800;color:var(--acc);display:flex;align-items:center;justify-content:center;text-align:center;line-height:21px}
+
+/* quick ref */
+.qg{padding:7px 14px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.qc{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:13px}
+.qc.full{grid-column:1/-1}
+.qt{font-size:10px;font-weight:800;color:var(--acc);text-transform:uppercase;letter-spacing:1.1px;margin-bottom:9px}
+.qr{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--bdr);font-size:13px}
+.qr:last-child{border-bottom:none}
+.ql{color:var(--t2)}
+.qv{font-weight:700;color:var(--text)}
+.qn{font-size:11px;color:var(--t3);margin-top:7px;line-height:1.5}
+.dtbl{width:100%;border-collapse:collapse;font-size:13px}
+.dtbl th{background:var(--bg3);color:var(--acc);padding:7px 9px;text-align:left;font-size:10px;letter-spacing:.7px}
+.dtbl td{padding:7px 9px;border-top:1px solid var(--bdr)}
+.dtbl .w{color:#fca5a5;font-weight:800}
+.ibox2{background:var(--bg4);border:1px solid var(--bdr);border-radius:8px;padding:10px 13px;font-family:'SF Mono','Fira Mono',monospace;font-size:12px;color:var(--acc);letter-spacing:.4px;line-height:2}
+
+/* ecam */
+.ecam-wrap{padding:7px 14px 14px}
+.legend{display:flex;flex-wrap:wrap;gap:7px;padding:11px;background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:9px}
+.li{display:flex;align-items:center;gap:5px;font-size:11px}
+.ld{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sb{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:7px;overflow:hidden}
+.sbh{padding:11px 14px;background:var(--bg3);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.sbn{font-size:13px;font-weight:800;color:var(--acc);letter-spacing:.4px}
+.sbc{font-size:11px;color:var(--t3)}
+.sbch{color:var(--t3);font-size:11px;transition:transform .2s}
+.sb.open .sbch{transform:rotate(180deg)}
+.sbb{display:none}
+.sb.open .sbb{display:block}
+.sbb ul{list-style:none}
+.sbb li{padding:9px 14px;border-top:1px solid var(--bdr);font-size:13px;line-height:1.5;display:flex;gap:9px;align-items:flex-start}
+.fd{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.fr{color:#fca5a5;font-weight:600}
+.fk{color:var(--text)}
+.fb{color:var(--blue);font-weight:600}
+.fo{color:#fbbf24;font-weight:600}
+.fn{font-size:11px;color:var(--t3);display:block;margin-top:2px}
+
+/* ─── REFERENCE PAGE ─── */
+.ref-grid{padding:7px 12px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.rtc{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .12s, transform .1s}
+.rtc:active{border-color:var(--acc);transform:scale(.98)}
+.rt-img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;display:block;background:#fff}
+.rt-foot{padding:5px 7px 7px;display:flex;gap:5px;align-items:flex-start}
+.rpn{background:var(--acc);color:#000;font-size:9px;font-weight:900;padding:2px 5px;border-radius:4px;flex-shrink:0;margin-top:2px}
+.rlbl{font-size:10px;color:var(--t2);line-height:1.4}
+
+/* ─── REF VIEWER MODAL ─── */
+#ref-modal{display:none;position:fixed;inset:0;z-index:1000;background:#000;flex-direction:column}
+#ref-modal.show{display:flex}
+#rm-hdr{display:flex;align-items:center;gap:9px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:rgba(0,0,0,.9);border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+#rm-lbl{font-size:12px;color:var(--t2);flex:1;text-align:center}
+#rm-pg{font-size:11px;font-weight:700;color:var(--acc);white-space:nowrap}
+.rm-close{width:30px;height:30px;background:rgba(255,255,255,.08);border:none;border-radius:6px;color:var(--text);font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#rm-body{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#rm-img{max-width:100%;max-height:100%;object-fit:contain;user-select:none;-webkit-user-drag:none;touch-action:pinch-zoom}
+.rm-nav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);border-radius:50%;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5}
+.rm-nav.l{left:7px}
+.rm-nav.r{right:7px}
+
+/* ─── NOTES MODAL ─── */
+#notes-modal{display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.65);align-items:flex-end;justify-content:center}
+#notes-modal.show{display:flex}
+#nm-inner{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px 14px 0 0;padding:18px 14px 28px;width:100%;max-width:600px}
+#nm-title{font-size:12px;font-weight:800;color:var(--acc);margin-bottom:3px}
+.nm-hint{font-size:11px;color:var(--t3);margin-bottom:9px}
+#nm-ta{width:100%;min-height:140px;background:var(--bg4);border:1px solid var(--bdr);border-radius:7px;color:var(--text);padding:9px;font-size:14px;font-family:inherit;resize:none;outline:none;margin-bottom:11px}
+#nm-ta:focus{border-color:var(--acc)}
+.nm-btns{display:flex;gap:7px}
+.nm-save{flex:1;padding:12px;background:var(--acc);border:none;border-radius:7px;color:#000;font-size:14px;font-weight:800;cursor:pointer}
+.nm-cancel{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:7px;color:var(--t2);font-size:14px;font-weight:600;cursor:pointer}
+
+/* animations */
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.popping{animation:pop .2s ease}
+::-webkit-scrollbar{width:0}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── Header ── -->
+<header>
+  <div class="hl">
+    <div class="logo">✈</div>
+    <h1><em>Flow</em>Check</h1>
+  </div>
+  <div class="hr">
+    <div id="pill" class="pill" style="display:none">0/0</div>
+    <button class="btn-edit" id="btn-edit" onclick="toggleEdit()" title="Edit Mode">✏</button>
+  </div>
+</header>
+<div class="pbw" id="pbw" style="display:none"><div class="pb" id="pb"></div></div>
+<div id="edit-banner">✏ EDIT MODE &nbsp;·&nbsp; Changes save automatically<span>Tap ✏ again to exit</span></div>
+
+<!-- ── Pages ── -->
+<main>
+
+<!-- ════ CHECKLIST ════ -->
+<div id="page-checklist" class="page active">
+  <div id="clContent"></div>
+  <div class="export-wrap">
+    <button class="btn-export" onclick="exportApp()">⬇ &nbsp;Export Customised App</button>
+  </div>
+  <div class="reset-wrap">
+    <button class="btn-reset" onclick="doReset()">↺ &nbsp;Reset Checklist for New Flight</button>
+  </div>
+</div>
+
+<!-- ════ PA SCRIPTS ════ -->
+<div id="page-pa" class="page">
+<div class="pgt">PA Scripts &amp; Announcements</div>
+
+<!-- Welcome -->
+<div class="card" id="c-w">
+  <div class="card-hdr" onclick="toggleCard('c-w',renderWelcome)"><div><div class="ct">CAPTAIN'S WELCOME ANNOUNCEMENT</div><div class="cs">Pre-departure · fill fields then read aloud</div></div><div class="chev">▼</div></div>
+  <div class="card-body">
+    <div class="fg">
+      <div class="f"><label>Greeting</label><select id="w-g" onchange="renderWelcome()"><option value="morning">Good Morning</option><option value="afternoon">Good Afternoon</option><option value="evening">Good Evening</option></select></div>
+      <div class="f"><label>FO / SFO Name</label><input id="w-fo" placeholder="e.g. Jonathan" oninput="renderWelcome()"></div>
+      <div class="f"><label>Flight No.</label><input id="w-fn" placeholder="e.g. TR658" oninput="renderWelcome()"></div>
+      <div class="f"><label>Destination</label><input id="w-dest" placeholder="e.g. Phuket" oninput="renderWelcome()"></div>
+      <div class="f"><label>Flight Time</label><input id="w-ft" placeholder="e.g. 1 hr 30 mins" oninput="renderWelcome()"></div>
+      <div class="f"><label>Weather</label><select id="w-wx" onchange="renderWelcome()"><option value="fair">Fair — slight bumps</option><option value="wx">Weather along route</option></select></div>
+      <div class="f"><label>Crew in Charge (CIC)</label><input id="w-cic" placeholder="CIC Name" oninput="renderWelcome()"></div>
+      <div class="f" style="display:flex;align-items:flex-end"><div class="ftog" style="width:100%"><div class="tsw" id="ts-delay" onclick="togDelay()"></div><label onclick="togDelay()" style="cursor:pointer">Delay?</label></div></div>
+    </div>
+    <div id="delay-f" style="display:none"><div class="fg"><div class="f"><label>Delay Reason</label><input id="w-dr" placeholder="e.g. late arriving aircraft" oninput="renderWelcome()"></div><div class="f"><label>New ETD</label><input id="w-etd" placeholder="e.g. 14:30" oninput="renderWelcome()"></div></div></div>
+    <div class="pas" id="scr-w"></div>
+    <button class="btn-copy" onclick="cp('scr-w',this)">📋 &nbsp;Copy Script</button>
+  </div>
+</div>
+
+<!-- Arrival -->
+<div class="card" id="c-a">
+  <div class="card-hdr" onclick="toggleCard('c-a',renderArrival)"><div><div class="ct">ARRIVAL ANNOUNCEMENT</div><div class="cs">Top of descent · ~25 min to landing</div></div><div class="chev">▼</div></div>
+  <div class="card-body">
+    <div class="fg">
+      <div class="f"><label>PF</label><select id="a-pf" onchange="renderArrival()"><option value="captain">Captain (me)</option><option value="fo">First Officer</option></select></div>
+      <div class="f"><label>Destination</label><input id="a-dest" placeholder="e.g. Singapore" oninput="renderArrival()"></div>
+      <div class="f"><label>Local Time Now</label><input id="a-lt" placeholder="e.g. 14:20" oninput="renderArrival()"></div>
+      <div class="f"><label>Ground Temp (°C)</label><input id="a-tmp" placeholder="e.g. 28" oninput="renderArrival()"></div>
+      <div class="f"><label>Est. Landing Time</label><input id="a-ldg" placeholder="e.g. 14:45" oninput="renderArrival()"></div>
+      <div class="f"><label>Closing Greeting</label><select id="a-g" onchange="renderArrival()"><option value="morning">morning</option><option value="afternoon">afternoon</option><option value="evening">evening</option></select></div>
+    </div>
+    <div class="fg" style="margin-bottom:12px">
+      <div class="ftog"><div class="tsw" id="ts-sg" onclick="togSG()"></div><label onclick="togSG()">Arriving Singapore?</label></div>
+      <div class="ftog"><div class="tsw" id="ts-scp" onclick="togSCP()"></div><label onclick="togSCP()">SCP Applied?</label></div>
+    </div>
+    <div class="pas" id="scr-a"></div>
+    <button class="btn-copy" onclick="cp('scr-a',this)">📋 &nbsp;Copy Script</button>
+  </div>
+</div>
+
+<!-- Go Around -->
+<div class="card" id="c-ga">
+  <div class="card-hdr" onclick="toggleCard('c-ga',renderGA)"><div><div class="ct">GO AROUND</div><div class="cs">After missed approach</div></div><div class="chev">▼</div></div>
+  <div class="card-body">
+    <div class="fg">
+      <div class="f"><label>Reason</label><select id="ga-r" onchange="renderGA()"><option value="weather conditions">Weather conditions</option><option value="air traffic conditions">Air traffic conditions</option><option value="weather / air traffic conditions">Weather / ATC conditions</option></select></div>
+      <div class="f"><label>Est. Minutes to Land</label><input id="ga-m" type="number" placeholder="e.g. 20" oninput="renderGA()"></div>
+    </div>
+    <div class="pas" id="scr-ga"></div>
+    <button class="btn-copy" onclick="cp('scr-ga',this)">📋 &nbsp;Copy Script</button>
+  </div>
+</div>
+
+<!-- Turbulence -->
+<div class="card" id="c-t">
+  <div class="card-hdr" onclick="toggleCard('c-t',()=>setTurb(1))"><div><div class="ct">TURBULENCE ANNOUNCEMENTS</div><div class="cs">PA 1–4 · Reassurance · tap to select</div></div><div class="chev">▼</div></div>
+  <div class="card-body">
+    <div class="ttabs">
+      <div class="ttab on" id="tt1" onclick="setTurb(1)">PA 1<br><span style="font-size:9px;font-weight:500">Light</span></div>
+      <div class="ttab" id="tt2" onclick="setTurb(2)">PA 2<br><span style="font-size:9px;font-weight:500">Anticipate</span></div>
+      <div class="ttab" id="tt3" onclick="setTurb(3)">PA 3<br><span style="font-size:9px;font-weight:500">Mod–Sev</span></div>
+      <div class="ttab" id="tt4" onclick="setTurb(4)">PA 4<br><span style="font-size:9px;font-weight:500">Imminent</span></div>
+      <div class="ttab" id="tt5" onclick="setTurb(5)">REASSURE</div>
+    </div>
+    <div class="tex" id="te2"><div class="fg"><div class="f"><label>Time to Encounter (mins)</label><input id="t-enc" type="number" placeholder="10" oninput="renderTurb()"></div><div class="f"><label>Duration (mins)</label><input id="t-dur" type="number" placeholder="15" oninput="renderTurb()"></div></div></div>
+    <div class="tex" id="te5"><div class="fg"><div class="f"><label>Nature of Turbulence</label><input id="t-nat" placeholder="e.g. clear air turbulence" oninput="renderTurb()"></div><div class="f"><label>Duration (mins)</label><input id="t-rdur" type="number" placeholder="20" oninput="renderTurb()"></div></div></div>
+    <div class="pas" id="scr-t"></div>
+    <button class="btn-copy" onclick="cp('scr-t',this)">📋 &nbsp;Copy Script</button>
+  </div>
+</div>
+</div><!-- /page-pa -->
+
+<!-- ════ BRIEFINGS ════ -->
+<div id="page-briefings" class="page">
+<div class="pgt">Standard Briefings &amp; References</div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">STANDARD TAKEOFF BRIEFING</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><div class="brief">"Call out any malfunction or warning. When any malfunction occurs before V1, I will call <span class="em">'STOP'</span> or <span class="em">'GO'</span>. Before V1, I will reject the takeoff for engine failure, any warning, caution or condition that <span class="em">significantly affects the safety of the flight</span>."</div></div></div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">FIRST OFFICER SECTOR BRIEFING (by Captain)</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><div class="brief">"I shall have control of the thrust levers for the takeoff. If I call <span class="em">'STOP'</span>, I will take over control and reject the takeoff. If I call <span class="em">'GO'</span>, you will continue the takeoff until I say, <span class="em">'I HAVE CONTROL'</span>"</div></div></div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">CABIN CREW BRIEFING — AWNF CPTS</div><div class="cs">Pre-departure briefing to CIC</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><div class="brief"><strong style="color:var(--acc)">AWNF</strong> &nbsp;Aircraft status · Weather · NOTAMs · Fuel<br><br><strong style="color:var(--acc)">CPTS</strong> &nbsp;Cargo (NOTOC) · PWD Pax · Time (ETD + flight time) · Station Colour<div class="ibox"><div class="it">✈ A320 iPad Login</div><div class="ir"><span style="color:var(--t2)">Aircraft</span><span>9V-TAN</span></div><div class="ir"><span style="color:var(--t2)">Username</span><span>TAN</span></div><div class="ir"><span style="color:var(--t2)">Password</span><span>A320#tan</span></div></div></div></div></div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">E-LOADSHEET WORKFLOW</div><div class="cs">Timeline before ETD</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><table class="wft"><tr><th>ETD−</th><th>By</th><th>Action</th></tr><tr><td class="etd">−40</td><td class="by">Load Control</td><td>Final ZFW available via Aviator</td></tr><tr><td class="etd">−35</td><td class="by">Flight Crew</td><td>Final Fuel &amp; Burn figures relayed to Load Control via ACARS</td></tr><tr><td class="etd">−12</td><td class="by">Flight Crew</td><td>E-Loadsheet received via Aviator</td></tr><tr><td class="etd" style="color:var(--acc)">↑</td><td class="by">Flight Crew</td><td>Check &amp; sign Loadsheet on Aviator</td></tr><tr><td class="etd">−5</td><td class="by">Load Control</td><td>ACARS: "Signed Loadsheet and NOTOC VER XX received"</td></tr></table></div></div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">E-NOTOC WORKFLOW</div><div class="cs">Timeline before ETD</div></div><div class="chev">▼</div></div>
+<div class="card-body" style="padding:0"><table class="wft"><tr><th>ETD−</th><th>By</th><th>Action</th></tr><tr><td class="etd">−20 to −15</td><td class="by">Flight Crew</td><td>E-NOTOC received via Aviator</td></tr><tr><td class="etd" style="color:var(--acc)">↑</td><td class="by">Flight Crew</td><td>Verify &amp; sign E-NOTOC on Aviator</td></tr><tr><td class="etd">−2</td><td class="by">Load Control</td><td>ACARS confirmation of signed Loadsheet + NOTOC</td></tr></table></div></div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">FUEL UPLIFT REASONS (14)</div><div class="cs">Discretionary / extra fuel justifications</div></div><div class="chev">▼</div></div>
+<div class="card-body"><ol class="reasons"><li>Weather – Departure</li><li>Weather – Enroute</li><li>Weather – Destination</li><li>ZFW Change</li><li>Long Taxi</li><li>Tankering</li><li>Technical</li><li>ATC – Departure</li><li>ATC – Enroute</li><li>ATC – Destination</li><li>Redispatch Top-up</li><li>Previous Sector</li><li>Over Fuel</li><li>Other – Enter reason in free text</li></ol></div></div>
+
+<div class="card"><div class="card-hdr" onclick="toggleCard(this.parentElement)"><div><div class="ct">AIRCRAFT DEFECT — DECISION FLOW</div><div class="cs">Before &amp; after pushback</div></div><div class="chev">▼</div></div>
+<div class="card-body"><div style="font-size:13px;line-height:2;color:var(--t2)"><div style="color:var(--text);font-weight:700;margin-bottom:6px">Before Pushback:</div><div>1. Deferred in DDL? <span style="color:var(--acc)">→ Yes:</span> MEL repetitive task? No → No further action | Yes → Engineer 'M' procedure, ATL entry</div><div>2. FCOM/eQRH reset available? <span style="color:var(--acc)">→ Try reset.</span> Successful → 'FOR INFO' ATL, no further action</div><div>3. In SIN? <span style="color:var(--acc)">→ Yes:</span> MAINTROL – engineer to rectify/defer. ATL &amp; DDL entries required</div><div>4. Not in SIN → Contact local engineers. If unavailable → MAINTROL</div><div style="color:var(--t3);margin-top:8px;font-size:11px">Commanders may defer MEL items with 'O' or NO procedures in consultation with MAINTROL.</div><div style="color:var(--text);font-weight:700;margin-top:12px;margin-bottom:6px">After Pushback to T/O Roll:</div><div>1. FCOM/eQRH reset? → Try. Successful → ATL 'FOR INFO', continue</div><div>2. Refer to MEL → 'NO DISPATCH'? → Return to bay, contact engineers, ATL entry</div><div>3. 'M' procedure? → Return to bay | 'O' procedure? → Carry out, consult MAINTROL, continue</div></div></div></div>
+</div><!-- /page-briefings -->
+
+<!-- ════ QUICK REF ════ -->
+<div id="page-qr" class="page">
+<div class="pgt">Quick Reference</div>
+<div class="qg">
+  <div class="qc"><div class="qt">Pax Weights</div><div class="qr"><span class="ql">Adult</span><span class="qv">77 kg</span></div><div class="qr"><span class="ql">Child</span><span class="qv">40 kg</span></div><div class="qr"><span class="ql">Infant</span><span class="qv">10 kg</span></div></div>
+  <div class="qc"><div class="qt">APU Fuel Burn</div><div class="qr"><span class="ql">No Bleed</span><span class="qv">80 kg/hr</span></div><div class="qr"><span class="ql">With Bleed</span><span class="qv">130 kg/hr</span></div></div>
+  <div class="qc full"><div class="qt">Fuel Burn Rates</div><div class="qr"><span class="ql">Taxi</span><span class="qv">20 kg/min</span></div><div class="qr"><span class="ql">Climb</span><span class="qv">60 kg/min</span></div><div class="qr"><span class="ql">Cruise</span><span class="qv">40–50 kg/min</span></div><div class="qr"><span class="ql">Descent</span><span class="qv">40 kg/min</span></div><div class="qr"><span class="ql">10 nm</span><span class="qv">≈ 100 kg</span></div><div class="qr"><span class="ql">1 Hold (4 min)</span><span class="qv">≈ 200 kg</span></div></div>
+  <div class="qc full"><div class="qt">Fuel Discrepancy Limits</div><table class="dtbl"><tr><th>FOB After Refuel</th><th>Action if Diff Above</th></tr><tr><td>Up to 6 t</td><td class="w">400 kg → Maintenance</td></tr><tr><td>6 t – 12 t</td><td class="w">500 kg → Maintenance</td></tr><tr><td>More than 12 t</td><td class="w">600 kg → Maintenance</td></tr></table><div class="qn">Crosscheck: FOB end of last flight + uplift = current FOB</div></div>
+  <div class="qc full"><div class="qt">Hard Landing Threshold</div><div class="qr"><span class="ql">Standard</span><span class="qv" style="color:#fca5a5">&gt; 2.6 G</span></div><div class="qr"><span class="ql">Overweight (OVW)</span><span class="qv" style="color:#fca5a5">&gt; 1.7 G</span></div><div class="qn">MCDU → AIDS → Stored Reports → Load Reports 15</div></div>
+  <div class="qc full"><div class="qt">Rest Rules</div><div class="qr"><span class="ql">Local Night</span><span class="qv">2200–0800 L (8 hrs)</span></div><div class="qr"><span class="ql">Rest Start</span><span class="qv">Sign-off + 1 hr</span></div><div class="qr"><span class="ql">Min Rest</span><span class="qv">10 hrs or preceding duty ↑</span></div></div>
+  <div class="qc full"><div class="qt">CAT Decision Altitudes</div><div style="display:flex;gap:7px;margin-top:4px"><div style="background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;flex:1;text-align:center"><div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.4px">CAT A</div><div style="font-size:22px;font-weight:800;color:var(--acc);margin-top:3px">Nil</div></div><div style="background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;flex:1;text-align:center"><div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.4px">CAT B</div><div style="font-size:22px;font-weight:800;color:var(--acc);margin-top:3px">3</div></div><div style="background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;flex:1;text-align:center"><div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.4px">CAT C</div><div style="font-size:22px;font-weight:800;color:var(--acc);margin-top:3px">10</div></div><div style="background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:9px 12px;flex:1;text-align:center"><div style="font-size:9px;color:var(--t3);font-weight:700;letter-spacing:.4px">CAT D</div><div style="font-size:22px;font-weight:800;color:var(--acc);margin-top:3px">120</div></div></div><div class="qn">Check validity + any recurring DDL</div></div>
+  <div class="qc full"><div class="qt">Engine Warm-Up</div><div class="qr"><span class="ql">First flight of day</span><span class="qv">5 mins</span></div><div class="qr"><span class="ql">Subsequent</span><span class="qv">2 mins</span></div></div>
+  <div class="qc full"><div class="qt">Fuel Planning</div><div class="qr"><span class="ql">Min Dispatch</span><span class="qv" style="font-size:12px">Taxi + Burn + SFR (min 60 min hold at dest)</span></div><div class="qr"><span class="ql">Tankering</span><span class="qv" style="font-size:12px">400 + Sec 1 Trip + Sec 2 Uplift</span></div><div class="qr"><span class="ql">Weight Limited</span><span class="qv">Use shortest option</span></div><div class="qr"><span class="ql">IRS Align (±2°)</span><span class="qv">WMKK · WBGG · WIBB</span></div></div>
+  <div class="qc full"><div class="qt">Pack Flow — LO Mode</div><div class="qr"><span class="ql">A320</span><span class="qv">&lt; 141 pax</span></div><div class="qr"><span class="ql">A321</span><span class="qv">&lt; 168 pax</span></div></div>
+  <div class="qc full"><div class="qt">Instrument Checks Sequence</div><div class="ibox2">CLB &nbsp;·&nbsp; NAV &nbsp;·&nbsp; BLUE &nbsp;·&nbsp; 1FD2<br>Q1013 &nbsp;·&nbsp; ELEV 8<br>ND: HDG &nbsp;·&nbsp; STBY COMPASS &nbsp;·&nbsp; ISIS<br>STS &nbsp;·&nbsp; PRESSURE AUTO<br>IRS DRIFT: 0 &nbsp;·&nbsp; GROSS ERROR CHECK</div></div>
+  <div class="qc full"><div class="qt">Certificate Folder — ADMIRAL WN</div><div style="font-size:13px;line-height:2;color:var(--t2)"><div>✈ AOC &nbsp;·&nbsp; Disinfection &nbsp;·&nbsp; Maintenance Release ×2 &nbsp;·&nbsp; Insurance</div><div>✈ Registration <span style="color:var(--t3)">(no expiry)</span> &nbsp;·&nbsp; Airworthiness &nbsp;·&nbsp; Station License</div><div>✈ Weight &amp; Balance <span style="color:var(--t3)">(no expiry)</span> &nbsp;·&nbsp; Noise <span style="color:var(--t3)">(no expiry)</span></div></div></div>
+</div>
+</div><!-- /page-qr -->
+
+<!-- ════ ECAM ════ -->
+<div id="page-ecam" class="page">
+<div class="ecam-wrap">
+  <div class="pgt" style="padding:7px 0 11px">ECAM Reset Table — A320 / A320N / A321N</div>
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:#fca5a5"></div><span style="color:#fca5a5">Warning/Caution</span></div>
+    <div class="li"><div class="ld" style="background:var(--t2)"></div><span>No W/C Box</span></div>
+    <div class="li"><div class="ld" style="background:#fbbf24"></div><span style="color:#fbbf24">Ground Reset Only</span></div>
+    <div class="li"><div class="ld" style="background:var(--blue)"></div><span style="color:var(--blue)">In-flight Reset Only</span></div>
+  </div>
+  <div id="ecamContent"></div>
+</div>
+</div>
+
+<!-- ════ REFERENCE ════ -->
+<div id="page-ref" class="page">
+  <div class="pgt">Original Document — 20 Pages in Sequence</div>
+  <div class="ref-grid" id="refGrid"></div>
+</div>
+
+</main><!-- /main -->
+
+<!-- ── Nav ── -->
+<nav>
+  <button id="nav-checklist" class="active" onclick="sw('checklist')"><span class="ni">☑</span><span>Checklist</span></button>
+  <button id="nav-pa" onclick="sw('pa')"><span class="ni">📢</span><span>PA Scripts</span></button>
+  <button id="nav-briefings" onclick="sw('briefings')"><span class="ni">📋</span><span>Briefings</span></button>
+  <button id="nav-qr" onclick="sw('qr')"><span class="ni">🔢</span><span>Quick Ref</span></button>
+  <button id="nav-ecam" onclick="sw('ecam')"><span class="ni">⚡</span><span>ECAM</span></button>
+  <button id="nav-ref" onclick="sw('ref')"><span class="ni">📄</span><span>Reference</span></button>
+</nav>
+
+</div><!-- /app -->
+
+<!-- ── Reference Viewer Modal ── -->
+<div id="ref-modal">
+  <div id="rm-hdr">
+    <button class="rm-close" onclick="closeRef()">✕</button>
+    <span id="rm-lbl"></span>
+    <span id="rm-pg"></span>
+  </div>
+  <div id="rm-body">
+    <button class="rm-nav l" onclick="prevRef()">&#8249;</button>
+    <img id="rm-img" src="" alt="">
+    <button class="rm-nav r" onclick="nextRef()">&#8250;</button>
+  </div>
+</div>
+
+<!-- ── Notes Edit Modal ── -->
+<div id="notes-modal">
+  <div id="nm-inner">
+    <div id="nm-title"></div>
+    <div class="nm-hint">One note per line. Leave blank to remove notes.</div>
+    <textarea id="nm-ta" placeholder="Enter notes here, one per line..."></textarea>
+    <div class="nm-btns">
+      <button class="nm-save" onclick="saveNotes()">Save Notes</button>
+      <button class="nm-cancel" onclick="closeNM()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ EXPORT HOOK (replaced on export) ══
+// FC_EXPORT_PLACEHOLDER
+
+// ══ DATA ══
+const DEFAULT_CL = [
+  { section:'PRE-DEPARTURE', items:[
+    {id:'fuel-photo', label:'Take picture of Fuel', notes:null},
+    {id:'stamp', label:'STAMP', notes:null},
+    {id:'ecrew', label:'Sign on eCrew', notes:null},
+    {id:'fuel-tl', label:'Fuel Page, Tech Log + Chocks on time, ADDL, CDL, OEB', notes:[
+      'Stay-over checks if aircraft on ground >36 hrs',
+      'Engine warm-up: 5 mins (first flight) / 2 mins (subsequent)',
+      'CAT ABCD: Nil / 3 / 10 / 120 — check validity + any recurring DDL?',
+      'OEB review'
+    ]},
+    {id:'cert', label:'Certificate Folder — ADMIRAL WN', notes:[
+      'AOC · Disinfection Certificate · Maintenance Release ×2 · Insurance',
+      'Registration (no expiry) · Certificate of Airworthiness · Station License',
+      'Weight & Balance (no expiry) · Noise Certificate (no expiry)'
+    ]},
+    {id:'license', label:'License Check', notes:null},
+    {id:'awnf', label:'AWNF — Aircraft, Weather, NOTAMs, Fuel', notes:null},
+    {id:'mcdu', label:'MCDU Request CFP', notes:null},
+  ]},
+  { section:'COCKPIT SETUP', items:[
+    {id:'prelim', label:'Preliminary Cockpit Prep', notes:[
+      'Pumps ALL ON',
+      'APU Bleed ON',
+      'PACK FLOW LO: <141 pax (A320) / <168 pax (A321)'
+    ]},
+    {id:'cc-brief', label:'Cabin Crew Briefing: AWNF CPTS (Cargo, PWD, Time, Stn Colour)', notes:[
+      'AWNF: Aircraft status · Weather · NOTAMs · Fuel',
+      'CPTS: Cargo (NOTOC) · PWD pax · Time (ETD + flight time) · Station Colour',
+      'A320 iPad — 9V-TAN | Username: TAN | Password: A320#tan'
+    ]},
+    {id:'cm1', label:'CM1 Flow (Oxy Check, Door Check)', notes:null},
+    {id:'setup-box', label:'Setup Box — Performance / Fuel / IRS', notes:[
+      'Min fuel to dispatch = Taxi + Burn-off + SFR (not less than 60 min hold over dest)',
+      'Weight limited → use shortest runway option',
+      'Tankering = 400 + Sector 1 Trip Fuel + Sector 2 Fuel Uplift',
+      'IRS: ±2° full alignment required at WMKK, WBGG, WIBB'
+    ]},
+    {id:'oxy', label:'Oxygen Test', notes:null},
+    {id:'instr', label:'Instrument Checks', notes:[
+      'CLB  ·  NAV  ·  BLUE  ·  1FD2',
+      'Q1013  ·  Elevation 8',
+      'ND: HDG  ·  STBY COMPASS  ·  ISIS',
+      'STS  ·  PRESSURE AUTO',
+      'IRS DRIFT: 0  ·  Gross Error Check'
+    ]},
+  ]},
+  { section:'BRIEFINGS & PA', items:[
+    {id:'tkoff-b', label:'Takeoff Briefing', notes:[
+      '"Call out any malfunction or warning. Before V1 I will call STOP or GO. I will reject for engine failure, any warning, caution or condition significantly affecting safety of flight."'
+    ]},
+    {id:'dep-b', label:'Departure Briefing', notes:null},
+    {id:'pa-do', label:'PA — Captain\'s Welcome Announcement', notes:[
+      'Go to PA Scripts tab to fill in flight details and generate the full script'
+    ]},
+    {id:'b4-start', label:'Before Start Checks (B4 Start)', notes:null},
+  ]},
+  { section:'SIGNATURES', items:[
+    {id:'s-tl', label:'Sign Tech Log', notes:null},
+    {id:'s-fld', label:'Sign FLD — 2 signatures with time', notes:null},
+    {id:'s-notoc', label:'Sign NOTOC (e-NOTOC via Aviator)', notes:null},
+    {id:'s-sep', label:'Sign SEP Equipment', notes:null},
+    {id:'s-sec', label:'Sign Security', notes:null},
+    {id:'s-av', label:'Sign Aviator + Updated Fuel / ZFW', notes:null},
+    {id:'s-fr', label:'Fuel Receipt?', notes:null},
+  ]},
+];
+
+const ECAM_SYS = [
+  {s:'ANTI ICE',f:[{t:'L(R) WINDSHIELD / WINDOW',c:'fr'},{t:'WING A.ICE SYS FAULT',c:'fr',n:'A320N and A321N'}]},
+  {s:'AIR',f:[{t:'PACK 1(2) REGUL FAULT',c:'fr',n:'(ACSC)'},{t:'ENG 1(2) BLEED FAULT',c:'fr',n:'(ENG BLEED)'},{t:'ENG 1(2) ABNORM PR',c:'fr',n:'(ENG BLEED)'},{t:'ENG 1(2) BLEED NOT CLSD',c:'fr',n:'(ENG BLEED)'}]},
+  {s:'AUTO FLT',f:[{t:'ATHR OFF',c:'fr'},{t:'FCU 1(2) FAULT',c:'fr'},{t:'FCU 1+2 FAULT',c:'fr'},{t:'YAM DAMPER 1(2)',c:'fr',n:'(FAC)'},{t:'CAT 3 DUAL displayed without ECAM',c:'fk',n:'(FAC)'},{t:'One or both MCDU locked or blank',c:'fk',n:'(MCDU)'},{t:'FMGC malfunction',c:'fk'},{t:'A/THR INOP SYS (NO ECAM)',c:'fk'}]},
+  {s:'BRAKES',f:[{t:'SYS 1(2) FAULT',c:'fr'},{t:'BSCU CH 1(2) FAULT — reset in air only L/G UP',c:'fr',n:'A320N / 321N'}]},
+  {s:'COND',f:[{t:'TRIM AIR SYS FAULT',c:'fr'}]},
+  {s:'COM',f:[{t:'CIDS 1+2 FAULT',c:'fr'},{t:'Uncommanded EVAC horn activation',c:'fk',n:'(CIDS)'},{t:'Frozen RMP',c:'fk'},{t:'Inadvertent triggering of ELT',c:'fk'},{t:'FAP Freezing',c:'fk'},{t:'SATCOM',c:'fk'},{t:'Incorrect number of emergency exits on FAP',c:'fk'}]},
+  {s:'DATALINK',f:[{t:'ATSU',c:'fk'},{t:'CINS',c:'fk'},{t:'DATALINK ATC FAULT',c:'fk'},{t:'DATALINK COMPANY FAULT',c:'fk'},{t:'COM VHF3 DATA FAULT',c:'fk'}]},
+  {s:'ELEC',f:[{t:'GPU cannot be connected to the aircraft',c:'fk'},{t:'ENG 1(2) FADEC SYS FAULT',c:'fr',n:'A320N'}]},
+  {s:'F/CTL',f:[{t:'ELAC 1(2) PITCH FAULT',c:'fr'},{t:'AIL SERVO FAULT',c:'fr',n:'(ELEC)'},{t:'SPLR FAULT',c:'fr',n:'(SEC)'}]},
+  {s:'FUEL',f:[{t:'Loss of fuel qty indication or simultaneous triggering',c:'fk'},{t:'FUEL L OUTER XFR CLOSED and FUEL R OUTER XFR CLOSED',c:'fk',n:'(FQIC)'},{t:'ENG 1(2) EIU FAULT',c:'fr'},{t:'DUAL COOLING NOT AVL',c:'fr',n:'A321N'}]},
+  {s:'FWS',f:[{t:'FWC 1(2) FAULT',c:'fr'}]},
+  {s:'L/G',f:[{t:'LGCIU 1(2) FAULT',c:'fr'},{t:'GPWS FAULT',c:'fr'},{t:'GPWS TERR DET FAULT',c:'fr'}]},
+  {s:'NAV',f:[{t:'GPWS FAULT & GPWS TERR DET FAULT',c:'fr'},{t:'TCAS FAULT',c:'fr'},{t:'ISIS malfunction',c:'fk'},{t:'GPS 1(2) FAULT',c:'fk',n:'A320'}]},
+  {s:'SMOKE',f:[{t:'DET FAULT',c:'fr',n:'(CIDS-SDF)'},{t:'LAV DET FAULT',c:'fr'},{t:'FWD(AFT) CARGO DET FAULT',c:'fr'},{t:'FWD(AFT) CRG 1(2) BTL FAULT',c:'fr'}]},
+  {s:'VENT',f:[{t:'AVNCS SYS FAULT',c:'fr',n:'(AEVC)'}]},
+  {s:'WHEEL',f:[{t:'N.W STEER',c:'fr'},{t:'STRG FAULT',c:'fr',n:'Case A: just pushed back  ·  Case B: all others'}]},
+];
+
+const REF_PAGES = [
+  {n:1,l:'Pre-flight Checklist'},{n:2,l:'Checklist · Takeoff Briefing · Welcome PA'},
+  {n:3,l:'Welcome PA (Official Annex A)'},{n:4,l:'Arrival Announcement + Handwritten Notes'},
+  {n:5,l:'Arrival PA · SCP · Go Around · Key Numbers'},{n:6,l:'Rest Rules · Fuel Burn Rates'},
+  {n:7,l:'Fuel Discrepancy — Ops Manual'},{n:8,l:'E-Loadsheet Operations Workflow'},
+  {n:9,l:'E-Loadsheet Sample (Appendix B)'},{n:10,l:'E-NOTOC Workflow · NOTOC Format'},
+  {n:11,l:'Fuel Uplift Reasons (heading)'},{n:12,l:'Discretionary Fuel Uplift — 14 Reasons'},
+  {n:13,l:'Aircraft Defect Flow — Before Pushback'},{n:14,l:'Restricted Page'},
+  {n:15,l:'Aircraft Defect Flow — Post-Pushback'},{n:16,l:'Turbulence PA 1 & 2'},
+  {n:17,l:'Turbulence PA 3 & 4 · FSB Sign Recycling'},{n:18,l:'Reassurance PA · Commander–CIC Comms'},
+  {n:19,l:'Turbulence Management Framework'},{n:20,l:'ECAM Reset Table — A320/A320N/A321N'},
+];
+
+// ══ STATE ══
+function getActiveData() {
+  if (window.FC_EXPORT) return window.FC_EXPORT;
+  const s = localStorage.getItem('fc-custom');
+  return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_CL));
+}
+let AD = getActiveData();
+let checked = JSON.parse(localStorage.getItem('fc-chk')||'{}');
+let expanded = {};
+let editMode = false;
+let turbN = 1, delayOn=false, sgOn=false, scpOn=false;
+let refN = 1, touchX = 0;
+let nmSI = 0, nmII = 0;
+
+function saveAD(){ localStorage.setItem('fc-custom', JSON.stringify(AD)); }
+function saveChk(){ localStorage.setItem('fc-chk', JSON.stringify(checked)); }
+function dc(o){ return JSON.parse(JSON.stringify(o)); }
+
+// ══ NAV ══
+function sw(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  const isCL = name==='checklist';
+  document.getElementById('pill').style.display = isCL ? '' : 'none';
+  document.getElementById('pbw').style.display = isCL ? '' : 'none';
+}
+
+// ══ CHECKLIST ══
+function renderCL(){
+  const c = document.getElementById('clContent');
+  c.innerHTML='';
+  AD.forEach((sec,si)=>{
+    const done = sec.items.filter(i=>checked[i.id]).length;
+    const h = document.createElement('div');
+    h.className='sh'; h.id='sh'+si;
+    h.innerHTML=`<span class="sh-title">${sec.section}</span><span class="sh-count">${done}/${sec.items.length}</span><button class="sh-edit" onclick="renSec(${si})">✎</button>`;
+    c.appendChild(h);
+    sec.items.forEach((item,ii)=>{
+      const el = document.createElement('div');
+      el.className='ci'+(checked[item.id]?' done':'')+(expanded[item.id]?' open':'');
+      el.id='ci-'+item.id;
+      const hasN = item.notes && item.notes.length;
+      el.innerHTML=`
+        <div class="ci-row" onclick="tapChk('${item.id}')">
+          <div class="cb">✓</div>
+          <div class="ci-lbl">${item.label}</div>
+          ${hasN?`<button class="exp-btn" onclick="event.stopPropagation();tapExp('${item.id}')">▼</button>`:''}
+        </div>
+        ${hasN?`<div class="ci-notes"><ul>${item.notes.map(n=>`<li>${n}</li>`).join('')}</ul></div>`:''}
+        <div class="ci-ebar">
+          <button class="eb" onclick="mvItem(${si},${ii},-1)">↑</button>
+          <button class="eb" onclick="mvItem(${si},${ii},1)">↓</button>
+          <button class="eb" onclick="edLbl(${si},${ii})">✎ Label</button>
+          <button class="eb" onclick="openNM(${si},${ii})">📝 Notes</button>
+          <button class="eb del" onclick="delItem(${si},${ii})">✕</button>
+        </div>`;
+      c.appendChild(el);
+    });
+    const add = document.createElement('button');
+    add.className='add-item';
+    add.textContent='+ Add Item to '+sec.section;
+    add.onclick = ()=>addItem(si);
+    c.appendChild(add);
+  });
+  updateProg();
+}
+
+function tapChk(id){
+  checked[id]=!checked[id]; saveChk();
+  const el=document.getElementById('ci-'+id);
+  el.classList.toggle('done',checked[id]);
+  const cb=el.querySelector('.cb');
+  cb.classList.remove('popping'); void cb.offsetWidth; cb.classList.add('popping');
+  setTimeout(()=>cb.classList.remove('popping'),250);
+  updateProg(); updSecCount(id);
+}
+function tapExp(id){ expanded[id]=!expanded[id]; document.getElementById('ci-'+id).classList.toggle('open',expanded[id]); }
+function updSecCount(id){
+  AD.forEach((sec,si)=>{
+    if(!sec.items.find(i=>i.id===id)) return;
+    const done=sec.items.filter(i=>checked[i.id]).length;
+    const el=document.getElementById('sh'+si);
+    if(el) el.querySelector('.sh-count').textContent=`${done}/${sec.items.length}`;
+  });
+}
+function updateProg(){
+  const all=AD.flatMap(s=>s.items); const t=all.length; const d=all.filter(i=>checked[i.id]).length;
+  document.getElementById('pill').textContent=`${d}/${t}`;
+  document.getElementById('pb').style.width=(t?Math.round(d/t*100):0)+'%';
+}
+function doReset(){ if(!confirm('Reset all checklist items for a new flight?')) return; checked={}; saveChk(); renderCL(); }
+
+// ══ EDIT MODE ══
+function toggleEdit(){
+  editMode=!editMode;
+  document.getElementById('app').classList.toggle('edit',editMode);
+  const btn=document.getElementById('btn-edit');
+  btn.classList.toggle('on',editMode);
+  btn.textContent=editMode?'✕':'✏';
+  document.getElementById('edit-banner').classList.toggle('show',editMode);
+}
+function edLbl(si,ii){
+  const cur=AD[si].items[ii].label;
+  const nv=prompt('Edit item label:',cur);
+  if(nv!==null && nv.trim()){ AD[si].items[ii].label=nv.trim(); saveAD(); renderCL(); }
+}
+function delItem(si,ii){
+  if(!confirm(`Delete: "${AD[si].items[ii].label}"?`)) return;
+  delete checked[AD[si].items[ii].id];
+  AD[si].items.splice(ii,1); saveAD(); saveChk(); renderCL();
+}
+function addItem(si){
+  const id='c'+Date.now();
+  AD[si].items.push({id,label:'New Item',notes:null}); saveAD(); renderCL();
+  setTimeout(()=>edLbl(si,AD[si].items.length-1),80);
+}
+function mvItem(si,ii,d){
+  const items=AD[si].items; const ni=ii+d;
+  if(ni<0||ni>=items.length) return;
+  [items[ii],items[ni]]=[items[ni],items[ii]]; saveAD(); renderCL();
+}
+function renSec(si){
+  const nv=prompt('Rename section:',AD[si].section);
+  if(nv!==null && nv.trim()){ AD[si].section=nv.trim().toUpperCase(); saveAD(); renderCL(); }
+}
+
+// ══ NOTES MODAL ══
+function openNM(si,ii){
+  nmSI=si; nmII=ii;
+  const item=AD[si].items[ii];
+  document.getElementById('nm-title').textContent=item.label;
+  document.getElementById('nm-ta').value=(item.notes||[]).join('\n');
+  document.getElementById('notes-modal').classList.add('show');
+}
+function saveNotes(){
+  const txt=document.getElementById('nm-ta').value.trim();
+  AD[nmSI].items[nmII].notes=txt?txt.split('\n').filter(l=>l.trim()):null;
+  saveAD(); renderCL(); closeNM();
+}
+function closeNM(){ document.getElementById('notes-modal').classList.remove('show'); }
+
+// ══ EXPORT ══
+async function exportApp(){
+  try{
+    const src=await fetch('./index.html').then(r=>r.text());
+    const data=JSON.stringify(AD);
+    const out=src.replace('// FC_EXPORT_PLACEHOLDER',`window.FC_EXPORT=${data};`);
+    const a=Object.assign(document.createElement('a'),{
+      href:URL.createObjectURL(new Blob([out],{type:'text/html;charset=utf-8'})),
+      download:'FlowCheck.html'
+    });
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+  }catch(e){ alert('Export: open the app from a web server (not file://) for this to work.'); }
+}
+
+// ══ ECAM ══
+function renderECAM(){
+  const c=document.getElementById('ecamContent'); c.innerHTML='';
+  const dc={'fr':'#fca5a5','fk':getComputedStyle(document.documentElement).getPropertyValue('--t2').trim(),'fb':'var(--blue)','fo':'#fbbf24'};
+  ECAM_SYS.forEach(sys=>{
+    const b=document.createElement('div'); b.className='sb';
+    b.innerHTML=`<div class="sbh" onclick="this.parentElement.classList.toggle('open')"><span class="sbn">${sys.s}</span><span style="display:flex;align-items:center;gap:7px"><span class="sbc">${sys.f.length} fault${sys.f.length>1?'s':''}</span><span class="sbch">▼</span></span></div><div class="sbb"><ul>${sys.f.map(f=>`<li><div class="fd" style="background:${dc[f.c]||'var(--t2)'}"></div><div><span class="${f.c}">${f.t}</span>${f.n?`<span class="fn">${f.n}</span>`:''}</div></li>`).join('')}</ul></div>`;
+    c.appendChild(b);
+  });
+}
+
+// ══ REFERENCE ══
+function renderRef(){
+  const g=document.getElementById('refGrid'); g.innerHTML='';
+  REF_PAGES.forEach(p=>{
+    const n=String(p.n).padStart(2,'0');
+    const el=document.createElement('div'); el.className='rtc'; el.onclick=()=>openRef(p.n);
+    el.innerHTML=`<img class="rt-img" src="ref/page_${n}.jpg" loading="lazy" alt="Page ${p.n}"><div class="rt-foot"><span class="rpn">${p.n}</span><span class="rlbl">${p.l}</span></div>`;
+    g.appendChild(el);
+  });
+}
+function openRef(n){
+  refN=n; updRef();
+  document.getElementById('ref-modal').classList.add('show');
+  document.getElementById('rm-body').scrollTop=0;
+}
+function updRef(){
+  const n=String(refN).padStart(2,'0');
+  document.getElementById('rm-img').src=`ref/page_${n}.jpg`;
+  document.getElementById('rm-lbl').textContent=REF_PAGES[refN-1].l;
+  document.getElementById('rm-pg').textContent=`${refN} / ${REF_PAGES.length}`;
+}
+function nextRef(){ if(refN<REF_PAGES.length){refN++;updRef();} }
+function prevRef(){ if(refN>1){refN--;updRef();} }
+function closeRef(){ document.getElementById('ref-modal').classList.remove('show'); }
+// swipe
+document.addEventListener('DOMContentLoaded',()=>{
+  const img=document.getElementById('rm-img');
+  img.addEventListener('touchstart',e=>{touchX=e.touches[0].clientX;},{passive:true});
+  img.addEventListener('touchend',e=>{
+    const dx=touchX-e.changedTouches[0].clientX;
+    if(Math.abs(dx)>50){dx>0?nextRef():prevRef();}
+  });
+});
+
+// ══ CARDS ══
+function toggleCard(elOrId,cb){
+  const card=typeof elOrId==='string'?document.getElementById(elOrId):elOrId;
+  const was=card.classList.contains('open');
+  document.querySelectorAll('.card.open').forEach(c=>c.classList.remove('open'));
+  if(!was){card.classList.add('open'); if(cb)cb();}
+}
+
+// ══ PA — WELCOME ══
+function togDelay(){ delayOn=!delayOn; document.getElementById('ts-delay').classList.toggle('on',delayOn); document.getElementById('delay-f').style.display=delayOn?'block':'none'; renderWelcome(); }
+function fi(v,l){ return v?`<span class="fill">${v}</span>`:`<span class="blank">[${l}]</span>`; }
+function renderWelcome(){
+  const g=document.getElementById('w-g').value, fo=document.getElementById('w-fo').value.trim(), fn=document.getElementById('w-fn').value.trim(), dest=document.getElementById('w-dest').value.trim(), ft=document.getElementById('w-ft').value.trim(), wx=document.getElementById('w-wx').value, cic=document.getElementById('w-cic').value.trim();
+  const wxt=wx==='fair'?'fair weather conditions with slight bumps along the way':'some weather along our route today. Rest assured, we will be making all necessary deviations to provide you with a pleasant and comfortable flight';
+  let delay='';
+  if(delayOn){ const dr=document.getElementById('w-dr').value.trim(), etd=document.getElementById('w-etd').value.trim(); delay=`<br><br>We apologise for the delay due to ${fi(dr,'delay reason')}. We now expect to depart at ${fi(etd,'new ETD')}. We appreciate your patience.`; }
+  document.getElementById('scr-w').innerHTML=`A very good ${g}, Ladies and Gentlemen, this is your Captain speaking. My name is Larry Teo. Together in the flight deck with me today is ${fi(fo,'FO/SFO Name')}, and we would like to welcome you onboard our flight ${fi(fn,'Flight No.')} to ${fi(dest,'Destination')}. The flight time today will be ${fi(ft,'Flight Time')}.${delay}<br><br>We are expecting ${wxt}.<br><br><span class="req">For your safety, please ensure that you always keep your seat belt fastened while seated.</span><br><br>Your Crew in Charge ${fi(cic,'CIC Name')} and his/her team of Cabin Crew will make sure that you are well looked after. I am certain that you will enjoy your flight with us.<br><br>As we will be departing shortly, please sit back, relax and have a pleasant flight. On behalf of all the crew, thank you for choosing to fly with Scoot.`;
+}
+
+// ══ PA — ARRIVAL ══
+function togSG(){ sgOn=!sgOn; document.getElementById('ts-sg').classList.toggle('on',sgOn); renderArrival(); }
+function togSCP(){ scpOn=!scpOn; document.getElementById('ts-scp').classList.toggle('on',scpOn); renderArrival(); }
+function renderArrival(){
+  const pf=document.getElementById('a-pf').value, dest=document.getElementById('a-dest').value.trim(), lt=document.getElementById('a-lt').value.trim(), tmp=document.getElementById('a-tmp').value.trim(), ldg=document.getElementById('a-ldg').value.trim(), g=document.getElementById('a-g').value;
+  const pilot=pf==='fo'?'your pilot':'your Captain';
+  const scp=scpOn?`<br><br><span class="req">The seat belt sign will be turned ON earlier today as we may experience some turbulence along our arrival path. For those of you who wish to use the lavatories, you may do so now, as you will be required to be seated with your seat belts fastened for longer periods. We appreciate your cooperation.</span>`:'';
+  const sg=sgOn?`<br><br>To all travellers visiting Singapore, a very warm welcome. To all Singaporeans, welcome home!`:'';
+  document.getElementById('scr-a').innerHTML=`Ladies and Gentlemen, this is ${pilot} speaking. We trust that you have had a pleasant flight thus far. Shortly, we will commence our descent into ${fi(dest,'Destination')}.<br><br>The local time is ${fi(lt,'Local Time')} and the ground temperature is ${fi(tmp,'Temp')}°C. With air traffic permitting, we will be landing at ${fi(ldg,'Landing Time')} local time.${scp}${sg}<br><br>Once again, thank you for choosing to fly with Scoot. We hope to see you again on one of our flights in the near future. Have a pleasant ${g}.<br><br>Cabin crew, secure the cabin for landing / SCP.`;
+}
+
+// ══ PA — GO AROUND ══
+function renderGA(){
+  const r=document.getElementById('ga-r').value, m=document.getElementById('ga-m').value.trim();
+  document.getElementById('scr-ga').innerHTML=`Ladies and Gentlemen, this is your Captain.<br><br>We have discontinued the approach due to ${r}. These conditions are now improving. We are proceeding to commence a second approach and we estimate to land in approximately ${fi(m,'minutes')} minutes. We apologize for the delay. Thank you.`;
+}
+
+// ══ PA — TURBULENCE ══
+function setTurb(n){
+  turbN=n;
+  [1,2,3,4,5].forEach(i=>{ document.getElementById('tt'+i).classList.toggle('on',i===n); });
+  document.getElementById('te2').classList.toggle('show',n===2);
+  document.getElementById('te5').classList.toggle('show',n===5);
+  renderTurb();
+}
+function renderTurb(){
+  let s='';
+  if(turbN===1) s=`<span class="req">LADIES AND GENTLEMEN, THIS IS YOUR CAPTAIN.</span><br><br>THE SEAT BELT SIGNS HAVE BEEN SWITCHED ON AS WE ARE EXPERIENCING / EXPECTING SOME TURBULENCE ALONG OUR FLIGHT PATH.<br><br><span class="req">FOR YOUR SAFETY, PLEASE REMAIN SEATED WITH YOUR SEAT BELT FASTENED.</span> THANK YOU FOR YOUR COOPERATION.<br><br><span class="req">CABIN CREW, TO CONTINUE SERVICE WITH CAUTION.</span><span class="nl">PA 1 — Light turbulence with cabin service. Commander/CIC may suspend at any time.</span>`;
+  else if(turbN===2){ const e=document.getElementById('t-enc').value.trim(), d=document.getElementById('t-dur').value.trim(); s=`LADIES AND GENTLEMEN, THIS IS YOUR CAPTAIN. IN ABOUT ${fi(e,'X')} MINUTES, WE CAN EXPECT TURBULENT WEATHER CONDITIONS, WHICH WILL LAST FOR ABOUT ${fi(d,'X')} MINUTES.<br><br>AS A SAFETY PRECAUTION, <span class="req">OUR CABIN CREW WILL SUSPEND SERVICE AND RETURN TO THEIR SEATS.</span><br><br><span class="req">PLEASE RETURN TO YOUR SEAT AND HAVE YOUR SEAT BELT FASTENED.</span><span class="nl">PA 2 — Anticipated turbulence, advance warning ≥5 mins.</span>`; }
+  else if(turbN===3) s=`<span class="req">CABIN CREW, PLEASE SUSPEND SERVICE AND TAKE YOUR SEATS.</span><br><br>LADIES AND GENTLEMEN, THIS IS YOUR CAPTAIN. DUE TO TURBULENCE, <span class="req">PLEASE RETURN TO YOUR SEAT AND HAVE YOUR SEAT BELT FASTENED.</span><span class="nl">PA 3 — Anticipated moderate–severe, &lt;5 min warning. Announce as soon as practicable after FSB ON.</span>`;
+  else if(turbN===4) s=`<span class="req">CABIN CREW AND PASSENGERS, BE SEATED IMMEDIATELY.</span><span class="nl">PA 4 — Unanticipated moderate–severe / imminent. Recycle FSB sign if no time for PA. Follow up ASAP.</span>`;
+  else if(turbN===5){ const nat=document.getElementById('t-nat').value.trim(), d=document.getElementById('t-rdur').value.trim(); s=`LADIES AND GENTLEMEN, THIS IS YOUR CAPTAIN. THIS TURBULENCE IS ASSOCIATED WITH ${fi(nat,'nature of turbulence')}. WE EXPECT THE SITUATION TO IMPROVE IN ${fi(d,'X')} MINUTES.<br><br><span class="req">PLEASE REMAIN SEATED WITH YOUR SEAT BELT FASTENED.</span>`; }
+  document.getElementById('scr-t').innerHTML=s;
+}
+
+// ══ COPY ══
+function cp(id,btn){ const t=document.getElementById(id).innerText; if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>{btn.innerHTML='✓ Copied!';setTimeout(()=>btn.innerHTML='📋 &nbsp;Copy Script',2000);});} }
+
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded',()=>{
+  renderCL(); renderECAM(); renderRef();
+  renderWelcome(); renderArrival(); renderGA(); renderTurb();
+  document.getElementById('pill').style.display='';
+  document.getElementById('pbw').style.display='';
+  updateProg();
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "FlowCheck — Capt. Larry Teo",
+  "short_name": "FlowCheck",
+  "description": "Pre-flight checklist, PA scripts & quick reference for A320/A321",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0b16",
+  "theme_color": "#0b0b16",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
