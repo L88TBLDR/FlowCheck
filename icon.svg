@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
   <rect width="192" height="192" rx="28" fill="#0d0d1a"/>
-  <text x="96" y="115" font-size="100" font-family="sans-serif" text-anchor="middle" fill="#FFC72C">✈</text>
+  <text x="96" y="96" font-size="62" font-family="'Arial Black',Arial,sans-serif" text-anchor="middle" fill="#FFC72C" font-weight="900" letter-spacing="-1">Flow</text>
+  <text x="96" y="150" font-size="50" font-family="'Arial Black',Arial,sans-serif" text-anchor="middle" fill="#f1f5f9" font-weight="900" letter-spacing="-1">Check</text>
 </svg>
